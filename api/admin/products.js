@@ -98,9 +98,9 @@ export default async function handler(req, res) {
         ? body.description.trim()
         : '';
 
-      const image_url = typeof body.image_url === 'string'
-        ? body.image_url.trim()
-        : '';
+      const image_url = typeof body.image_url === 'string' ? body.image_url.trim() : '';
+      const image_urls = Array.isArray(body.image_urls) ? body.image_urls : (image_url ? [image_url] : []);
+      if (image_urls.length > 4 || image_urls.some(url => typeof url !== 'string' || url.length > 2048 || !/^https:\/\//i.test(url))) return res.status(400).json({ error: 'अधिकतम 4 वैध HTTPS फोटो चुनें' });
 
       const price = Number(body.price);
       const stock = Number(body.stock);
@@ -145,7 +145,8 @@ export default async function handler(req, res) {
           description,
           price,
           stock,
-          image_url: image_url || null,
+          image_url: image_urls[0] || image_url || null,
+          image_urls,
           active: true
         })
         .select()
@@ -235,6 +236,14 @@ export default async function handler(req, res) {
         }
 
         updates.image_url = imageUrl || null;
+      }
+
+      if (body.image_urls !== undefined) {
+        if (!Array.isArray(body.image_urls) || body.image_urls.length > 4 || body.image_urls.some(url => typeof url !== 'string' || url.length > 2048 || !/^https:\/\//i.test(url))) {
+          return res.status(400).json({ error: 'अधिकतम 4 वैध HTTPS फोटो चुनें' });
+        }
+        updates.image_urls = body.image_urls;
+        updates.image_url = body.image_urls[0] || null;
       }
 
       if (body.active !== undefined) {
