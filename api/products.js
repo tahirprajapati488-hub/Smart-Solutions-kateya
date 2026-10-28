@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, description, price, image_url, category, stock')
+      .select('id, name, description, price, image_url, image_urls, category, stock')
       .eq('active', true)
       .order('id', { ascending: true });
 
@@ -54,6 +54,7 @@ export default async function handler(req, res) {
     if (offersError && !/product_offers/i.test(offersError.message || '')) throw offersError;
     const activeOffers = offers || [];
     const productsWithOffers = (data || []).map(product => {
+      product.image_urls = Array.isArray(product.image_urls) && product.image_urls.length ? product.image_urls : (product.image_url ? [product.image_url] : []);
       const offer = activeOffers.find(o => String(o.product_id) === String(product.id));
       if (!offer) return { ...product, offer: null, final_price: Number(product.price) };
       const price = Number(product.price), value = Number(offer.discount_value);
