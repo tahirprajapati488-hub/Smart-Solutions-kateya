@@ -439,7 +439,9 @@ const PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent(
       id: String(p.id),
       name: p.name,
       category: p.category || "Other",
-      price: Number(p.price),
+      price: Number(p.final_price ?? p.price),
+      originalPrice: Number(p.price),
+      offer: p.offer || null,
       stock: Number(p.stock),
       minQty: 1,
       image: p.image_url || "",
@@ -610,7 +612,13 @@ function productCard(p){
   const info = document.createElement("div"); info.className = "p-info";
   const nm = document.createElement("div"); nm.className = "p-name"; nm.textContent = p.name;
   const ct = document.createElement("div"); ct.className = "p-cat"; ct.textContent = p.category || "";
-  const pr = document.createElement("div"); pr.className = "p-price"; pr.innerHTML = rupee(p.price) + " <small>/ piece</small>";
+  const pr = document.createElement("div"); pr.className = "p-price";
+  if (p.offer && p.originalPrice > p.price) {
+    const old = document.createElement("del"); old.style.cssText="color:#777;font-size:13px;margin-right:7px"; old.textContent=rupee(p.originalPrice);
+    const now = document.createElement("strong"); now.textContent=rupee(p.price);
+    const badge = document.createElement("span"); badge.style.cssText="display:inline-block;background:#dc2626;color:white;padding:3px 7px;border-radius:12px;font-size:11px;margin-left:6px"; badge.textContent=p.offer.title;
+    pr.append(old, now, badge);
+  } else { pr.textContent = rupee(p.price) + " / piece"; }
   info.append(nm, ct, pr);
   const min = p.minQty || 1;
   if (min > 1){ const m = document.createElement("div"); m.className = "p-min"; m.textContent = "Min. order: " + min + " pcs"; info.appendChild(m); }

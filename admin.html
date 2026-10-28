@@ -107,6 +107,26 @@ hr{border:0;border-top:1px solid #eee;margin:12px 0}
       <div id="productsList">Products लोड हो रहे हैं...</div>
     </div>
 
+    <!-- OFFERS & FESTIVALS -->
+    <div class="card">
+      <h3>Offers & Festivals</h3>
+      <p class="muted">किसी प्रोडक्ट पर त्योहार/कस्टम ऑफर लगाएँ। पहले Supabase migration लागू करना जरूरी है।</p>
+      <form id="offerForm">
+        <input type="hidden" name="id">
+        <label>Product</label><select name="product_id" id="offerProduct" required></select>
+        <input name="title" placeholder="Offer/Festival name (e.g. Diwali Sale)" maxlength="120" required>
+        <label>Discount type</label><select name="discount_type"><option value="percentage">Percentage (%)</option><option value="fixed">Fixed amount (₹)</option></select>
+        <input name="discount_value" type="number" min="0.01" step="0.01" placeholder="Discount value" required>
+        <label>Start date & time</label><input name="start_date" type="datetime-local" required>
+        <label>End date & time</label><input name="end_date" type="datetime-local" required>
+        <label><input name="is_active" type="checkbox" checked style="width:auto"> Offer enabled</label>
+        <button type="submit" id="saveOfferBtn">Save Offer</button>
+        <button type="button" class="secondary" id="cancelOfferEdit" hidden>Cancel Edit</button>
+      </form>
+      <button type="button" class="secondary" id="refreshOffersBtn">Refresh Offers</button>
+      <div id="offersList">Offers लोड हो रहे हैं...</div>
+    </div>
+
     <!-- ORDER MANAGEMENT -->
     <div class="card">
       <h3>Customer Orders</h3>
@@ -329,6 +349,7 @@ $('loginForm').addEventListener('submit', async event => {
       loadProducts(),
       loadOrders()
     ]);
+    await loadOffers();
 
     show('Admin Panel तैयार है।');
   } catch (error) {
@@ -348,6 +369,7 @@ async function loadProducts() {
   try {
     const data = await productRequest('GET');
     products = data.products || [];
+    fillOfferProducts();
     productsList.replaceChildren();
 
     if (!products.length) {
@@ -702,6 +724,37 @@ async function loadOrders() {
     throw error;
   }
 }
+
+/* OFFERS & FESTIVALS */
+const offerForm = $('offerForm');
+const offersList = $('offersList');
+function offerRequest(method, body = null) { return adminRequest('/api/admin/offers', method, body); }
+function fillOfferProducts() {
+  const select = $('offerProduct'); select.replaceChildren();
+  products.forEach(p => { const o=document.createElement('option'); o.value=String(p.id); o.textContent=`${p.name} — ₹${p.price}`; select.append(o); });
+}
+async function loadOffers() {
+  offersList.textContent='Offers लोड हो रहे हैं...';
+  try {
+    const data=await offerRequest('GET'); offersList.replaceChildren();
+    if (!(data.offers||[]).length) { offersList.textContent='अभी कोई ऑफर नहीं है।'; return; }
+    data.offers.forEach(offer=>{
+      const card=document.createElement('div'); card.className='product';
+      const product=products.find(p=>String(p.id)===String(offer.product_id));
+      const h=document.createElement('h4'); h.textContent=offer.title; card.append(h);
+      const info=document.createElement('p'); info.textContent=`${product?.name || 'Product ID '+offer.product_id} • ${offer.discount_type==='percentage'?offer.discount_value+'%':'₹'+offer.discount_value} discount`; card.append(info);
+      const dates=document.createElement('p'); dates.textContent=`${new Date(offer.start_date).toLocaleString()} – ${new Date(offer.end_date).toLocaleString()} • ${offer.is_active?'Enabled':'Disabled'}`; card.append(dates);
+      const actions=document.createElement('div'); actions.className='actions';
+      const edit=document.createElement('button'); edit.textContent='Edit'; edit.onclick=()=>{offerForm.elements.id.value=offer.id; offerForm.elements.product_id.value=String(offer.product_id); offerForm.elements.title.value=offer.title; offerForm.elements.discount_type.value=offer.discount_type; offerForm.elements.discount_value.value=offer.discount_value; offerForm.elements.start_date.value=new Date(offer.start_date).toISOString().slice(0,16); offerForm.elements.end_date.value=new Date(offer.end_date).toISOString().slice(0,16); offerForm.elements.is_active.checked=offer.is_active; $('saveOfferBtn').textContent='Update Offer'; $('cancelOfferEdit').hidden=false; offerForm.scrollIntoView({behavior:'smooth'}); };
+      const toggle=document.createElement('button'); toggle.className='secondary'; toggle.textContent=offer.is_active?'Disable':'Enable'; toggle.onclick=async()=>{try{await offerRequest('PATCH',{id:offer.id,is_active:!offer.is_active});await loadOffers();show('Offer status updated.');}catch(e){show(e.message);}};
+      const del=document.createElement('button'); del.className='danger'; del.textContent='Delete'; del.onclick=async()=>{if(!confirm('यह ऑफर हटाएँ?'))return;try{await offerRequest('DELETE',{id:offer.id});await loadOffers();show('Offer deleted.');}catch(e){show(e.message);}};
+      actions.append(edit,toggle,del);card.append(actions);offersList.append(card);
+    });
+  } catch(e) { offersList.textContent='Offers load नहीं हुए: '+e.message; }
+}
+offerForm.addEventListener('submit',async e=>{e.preventDefault();try{const f=offerForm.elements;const body={product_id:f.product_id.value,title:f.title.value.trim(),discount_type:f.discount_type.value,discount_value:Number(f.discount_value.value),start_date:new Date(f.start_date.value).toISOString(),end_date:new Date(f.end_date.value).toISOString(),is_active:f.is_active.checked};if(f.id.value){body.id=f.id.value;await offerRequest('PATCH',body);}else{await offerRequest('POST',body);}offerForm.reset();f.id.value='';f.is_active.checked=true;$('saveOfferBtn').textContent='Save Offer';$('cancelOfferEdit').hidden=true;await loadOffers();show('Offer saved.');}catch(e){show('Offer save error: '+e.message);}});
+$('cancelOfferEdit').onclick=()=>{offerForm.reset();offerForm.elements.id.value='';offerForm.elements.is_active.checked=true;$('saveOfferBtn').textContent='Save Offer';$('cancelOfferEdit').hidden=true;};
+$('refreshOffersBtn').onclick=loadOffers;
 
 /* REFRESH BUTTONS */
 $('refreshBtn').addEventListener('click', loadProducts);
