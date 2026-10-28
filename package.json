@@ -1,0 +1,13 @@
+{
+"name": "smart-solutions-kateya",
+"version": "1.0.0",
+"private": true,
+"description": "Smart Solutions Kateya storefront",
+"scripts": {
+"start": "npx serve ."
+},
+"dependencies": {
+"@supabase/supabase-js": "^2.57.0",
+"serve": "^14.2.4"
+}
+}

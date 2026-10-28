@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14213d">
+<title>Smart Solutions | Admin Panel</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5f9;color:#222}
+header{background:#14213d;color:white;padding:18px}
+header h2{margin:0;font-size:22px}
+main{max-width:850px;margin:20px auto;padding:15px}
+.card{background:white;padding:18px;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 12px #0000000d}
+h3{margin-top:0}
+input,textarea,select,button{width:100%;padding:12px;margin:7px 0;border-radius:7px;font-size:15px}
+input,textarea,select{border:1px solid #ddd;background:white;color:#222}
+textarea{min-height:80px;resize:vertical}
+button{border:0;background:#1769ff;color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+.danger{background:#c62828}
+.secondary{background:#475569}
+.success{background:#16803c}
+.warning{background:#b77900}
+.product,.order{border:1px solid #e5e7eb;padding:14px;border-radius:9px;margin:12px 0;overflow-wrap:anywhere}
+.product h4,.order h4{margin:0 0 8px;font-size:17px}
+.product p,.order p{margin:6px 0;font-size:14px;line-height:1.5}
+.product img{display:block;max-width:120px;max-height:120px;object-fit:contain;margin:8px 0}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.actions button{margin:0}
+.muted{color:#666;font-size:13px}
+.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:bold;background:#e0e7ff;color:#3730a3}
+.active{background:#dcfce7;color:#166534}
+.inactive{background:#fee2e2;color:#991b1b}
+#panel{display:none}
+#message{white-space:pre-wrap;font-size:14px;line-height:1.5}
+.order-items{background:#f8fafc;padding:10px;border-radius:7px;margin:8px 0}
+hr{border:0;border-top:1px solid #eee;margin:12px 0}
+@media(max-width:420px){main{padding:10px}.card{padding:14px}}
+</style>
+</head>
+
+<body>
+<header>
+  <h2>Smart Solutions — Admin</h2>
+</header>
+
+<main>
+  <section class="card" id="loginBox">
+    <h3>Admin Login</h3>
+    <p class="muted">केवल अधिकृत Admin लॉगिन कर सकता है।</p>
+
+    <form id="loginForm">
+      <input id="email" type="email" placeholder="Admin email"
+        autocomplete="username" required>
+
+      <input id="password" type="password" placeholder="Password"
+        autocomplete="current-password" required>
+
+      <button id="loginBtn" type="submit">Login</button>
+    </form>
+  </section>
+
+  <section id="panel">
+
+    <!-- PRODUCT FORM -->
+    <div class="card">
+      <h3 id="formTitle">नया प्रोडक्ट जोड़ें</h3>
+
+      <form id="productForm">
+        <input name="name" placeholder="Product name"
+          maxlength="150" required>
+
+        <textarea name="description"
+          placeholder="Product description" maxlength="5000"></textarea>
+
+        <input name="price" type="number" placeholder="Price (₹)"
+          min="0.01" step="0.01" required>
+
+        <input name="category" placeholder="Category"
+          maxlength="80" required>
+
+        <input name="stock" type="number" placeholder="Stock quantity"
+          min="0" step="1" required>
+
+        <label for="imageFile"><b>Product Photo</b></label>
+        <input id="imageFile" name="image_file" type="file"
+          accept="image/jpeg,image/png,image/webp">
+
+        <img id="imagePreview" alt="Product preview" hidden
+          style="max-width:150px;max-height:150px;object-fit:contain">
+
+        <p class="muted">JPG, PNG या WebP • अधिकतम 3 MB</p>
+
+        <button id="saveBtn" type="submit">Add Product</button>
+
+        <button id="cancelEditBtn" class="secondary"
+          type="button" hidden>Cancel Edit</button>
+      </form>
+    </div>
+
+    <!-- PRODUCT MANAGEMENT -->
+    <div class="card">
+      <h3>Products Management</h3>
+      <button id="refreshBtn" type="button">Refresh Products</button>
+      <div id="productsList">Products लोड हो रहे हैं...</div>
+    </div>
+
+    <!-- ORDER MANAGEMENT -->
+    <div class="card">
+      <h3>Customer Orders</h3>
+      <p class="muted">
+        यहाँ वेबसाइट से आए ऑर्डर दिखाई देंगे। ग्राहक से संपर्क करके
+        टोकन और ऑर्डर की पुष्टि करें।
+      </p>
+
+      <button id="refreshOrdersBtn" type="button">
+        Refresh Orders
+      </button>
+
+      <div id="ordersList">Orders लोड हो रहे हैं...</div>
+    </div>
+
+    <div class="card">
+      <button class="danger" id="logoutBtn" type="button">Logout</button>
+    </div>
+
+  </section>
+
+  <p id="message" role="status" aria-live="polite"></p>
+</main>
+
+<script type="module">
+import { createClient } from
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL =
+  'https://svkrdigrxclqwytilomd.supabase.co';
+
+const SUPABASE_ANON_KEY =
+  'sb_publishable_R5A69_1VytJ7lP80Yg_9-g_oucHf4Lz';
+
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+const $ = id => document.getElementById(id);
+
+const message = $('message');
+const loginBox = $('loginBox');
+const panel = $('panel');
+const productForm = $('productForm');
+const productsList = $('productsList');
+const ordersList = $('ordersList');
+const saveBtn = $('saveBtn');
+const imageFile = $('imageFile');
+const imagePreview = $('imagePreview');
+
+let editingId = null;
+let products = [];
+let currentImageUrl = '';
+let selectedImageFile = null;
+let orders = [];
+
+const allowedStatuses = [
+  'Pending',
+  'Contacted',
+  'Token Requested',
+  'Confirmed',
+  'Cancelled'
+];
+
+function show(text) {
+  message.textContent = text;
+}
+
+function setBusy(button, busy, busyText = 'Please wait...') {
+  if (busy) {
+    button.dataset.oldText = button.textContent;
+    button.textContent = busyText;
+    button.disabled = true;
+  } else {
+    button.textContent = button.dataset.oldText || button.textContent;
+    button.disabled = false;
+  }
+}
+
+async function getToken() {
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error || !data.session?.access_token) {
+    throw new Error('Session expired. Please login again.');
+  }
+
+  return data.session.access_token;
+}
+
+/* Authenticated requests to the Admin APIs */
+async function adminRequest(endpoint, method, body = null) {
+  const token = await getToken();
+
+  const options = {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    cache: 'no-store'
+  };
+
+  if (body !== null) {
+    options.headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(endpoint, options);
+  const data = await response.json().catch(() => ({}));
+
+  if (response.status === 401) {
+    await supabase.auth.signOut();
+    loginBox.style.display = 'block';
+    panel.style.display = 'none';
+    throw new Error('Session expired. Please login again.');
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Request failed');
+  }
+
+  return data;
+}
+
+function productRequest(method, body = null) {
+  return adminRequest('/api/admin/products', method, body);
+}
+
+function orderRequest(method, body = null) {
+  return adminRequest('/api/admin/orders', method, body);
+}
+
+/* IMAGE UPLOAD */
+imageFile.addEventListener('change', () => {
+  selectedImageFile = imageFile.files?.[0] || null;
+
+  if (!selectedImageFile) return;
+
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+  ];
+
+  if (!allowedTypes.includes(selectedImageFile.type)) {
+    show('केवल JPG, PNG या WebP फोटो चुनें।');
+    imageFile.value = '';
+    selectedImageFile = null;
+    return;
+  }
+
+  if (selectedImageFile.size > 3 * 1024 * 1024) {
+    show('फोटो का आकार 3 MB से कम होना चाहिए।');
+    imageFile.value = '';
+    selectedImageFile = null;
+    return;
+  }
+
+  imagePreview.src = URL.createObjectURL(selectedImageFile);
+  imagePreview.hidden = false;
+});
+
+async function uploadProductImage(file) {
+  if (!file) return currentImageUrl;
+
+  const token = await getToken();
+
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('फोटो पढ़ी नहीं जा सकी।'));
+    reader.readAsDataURL(file);
+  });
+
+  const response = await fetch('/api/admin/upload-image', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      image: dataUrl,
+      contentType: file.type
+    })
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || !result.image_url) {
+    throw new Error(result.error || 'फोटो अपलोड नहीं हुई।');
+  }
+
+  return result.image_url;
+}
+
+/* LOGIN */
+$('loginForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const button = $('loginBtn');
+  setBusy(button, true, 'Logging in...');
+
+  try {
+    const email = $('email').value.trim();
+    const password = $('password').value;
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    loginBox.style.display = 'none';
+    panel.style.display = 'block';
+
+    show('Products और Orders लोड हो रहे हैं...');
+
+    await Promise.all([
+      loadProducts(),
+      loadOrders()
+    ]);
+
+    show('Admin Panel तैयार है।');
+  } catch (error) {
+    await supabase.auth.signOut();
+    loginBox.style.display = 'block';
+    panel.style.display = 'none';
+    show('Login/API error: ' + error.message);
+  } finally {
+    setBusy(button, false);
+  }
+});
+
+/* LOAD PRODUCTS */
+async function loadProducts() {
+  productsList.textContent = 'Products लोड हो रहे हैं...';
+
+  try {
+    const data = await productRequest('GET');
+    products = data.products || [];
+    productsList.replaceChildren();
+
+    if (!products.length) {
+      productsList.textContent = 'अभी कोई प्रोडक्ट नहीं है।';
+      return;
+    }
+
+    products.forEach(product => {
+      const card = document.createElement('div');
+      card.className = 'product';
+
+      const title = document.createElement('h4');
+      title.textContent = product.name;
+
+      const status = document.createElement('span');
+      status.className =
+        'status ' + (product.active ? 'active' : 'inactive');
+      status.textContent = product.active ? 'Active' : 'Inactive';
+
+      const price = document.createElement('p');
+      price.textContent = `कीमत: ₹${product.price}`;
+
+      const category = document.createElement('p');
+      category.textContent = `Category: ${product.category || 'Other'}`;
+
+      const stock = document.createElement('p');
+      stock.textContent = `Stock: ${product.stock}`;
+
+      card.append(title, status, price, category, stock);
+
+      if (product.image_url) {
+        const image = document.createElement('img');
+        image.src = product.image_url;
+        image.alt = product.name;
+        image.loading = 'lazy';
+        image.onerror = () => image.remove();
+        card.append(image);
+      }
+
+      if (product.description) {
+        const description = document.createElement('p');
+        description.textContent = product.description;
+        card.append(description);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.textContent = 'Edit';
+      editButton.onclick = () => startEdit(product);
+
+      const activeButton = document.createElement('button');
+      activeButton.type = 'button';
+      activeButton.className = 'warning';
+      activeButton.textContent =
+        product.active ? 'Deactivate' : 'Activate';
+      activeButton.onclick = () => toggleActive(product, activeButton);
+
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.className = 'danger';
+      deleteButton.textContent = 'Delete';
+      deleteButton.onclick = () => deleteProduct(product, deleteButton);
+
+      actions.append(editButton, activeButton, deleteButton);
+      card.append(actions);
+      productsList.append(card);
+    });
+  } catch (error) {
+    productsList.textContent = error.message;
+    show('Products error: ' + error.message);
+    throw error;
+  }
+}
+
+/* EDIT PRODUCT */
+function startEdit(product) {
+  editingId = product.id;
+
+  productForm.elements.name.value = product.name || '';
+  productForm.elements.description.value = product.description || '';
+  productForm.elements.price.value = product.price;
+  productForm.elements.category.value = product.category || '';
+  productForm.elements.stock.value = product.stock;
+
+  currentImageUrl = product.image_url || '';
+  selectedImageFile = null;
+  imageFile.value = '';
+  imagePreview.src = currentImageUrl;
+  imagePreview.hidden = !currentImageUrl;
+
+  $('formTitle').textContent = 'प्रोडक्ट एडिट करें';
+  saveBtn.textContent = 'Save Changes';
+  $('cancelEditBtn').hidden = false;
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  show('बदलाव करके Save Changes दबाएँ।');
+}
+
+function cancelEdit() {
+  editingId = null;
+  productForm.reset();
+  currentImageUrl = '';
+  selectedImageFile = null;
+  imagePreview.removeAttribute('src');
+  imagePreview.hidden = true;
+
+  $('formTitle').textContent = 'नया प्रोडक्ट जोड़ें';
+  saveBtn.textContent = 'Add Product';
+  $('cancelEditBtn').hidden = true;
+}
+
+$('cancelEditBtn').addEventListener('click', cancelEdit);
+
+/* SAVE PRODUCT */
+productForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  setBusy(saveBtn, true, 'Saving...');
+
+  try {
+    const form = new FormData(productForm);
+
+    const body = {
+      name: String(form.get('name') || '').trim(),
+      description: String(form.get('description') || '').trim(),
+      price: Number(form.get('price')),
+      category: String(form.get('category') || '').trim(),
+      stock: Number(form.get('stock'))
+    };
+
+    if (
+      !body.name ||
+      !body.category ||
+      !Number.isFinite(body.price) ||
+      body.price <= 0 ||
+      !Number.isSafeInteger(body.stock) ||
+      body.stock < 0
+    ) {
+      throw new Error('नाम, category, कीमत और stock सही भरें।');
+    }
+
+    body.image_url = await uploadProductImage(selectedImageFile);
+
+    if (editingId !== null) {
+      body.id = editingId;
+      await productRequest('PATCH', body);
+      show('प्रोडक्ट अपडेट हो गया।');
+    } else {
+      await productRequest('POST', body);
+      show('नया प्रोडक्ट जुड़ गया।');
+    }
+
+    cancelEdit();
+    await loadProducts();
+  } catch (error) {
+    show('Save error: ' + error.message);
+  } finally {
+    setBusy(saveBtn, false);
+  }
+});
+
+/* ACTIVATE / DEACTIVATE */
+async function toggleActive(product, button) {
+  const action = product.active ? 'Inactive' : 'Active';
+
+  if (!confirm(`क्या "${product.name}" को ${action} करना है?`)) {
+    return;
+  }
+
+  setBusy(button, true, 'Updating...');
+
+  try {
+    await productRequest('PATCH', {
+      id: product.id,
+      active: !product.active
+    });
+
+    show('Product status अपडेट हो गया।');
+    await loadProducts();
+  } catch (error) {
+    show('Status error: ' + error.message);
+    setBusy(button, false);
+  }
+}
+
+/* DELETE PRODUCT */
+async function deleteProduct(product, button) {
+  if (!confirm(`क्या "${product.name}" को Delete करना है?`)) return;
+
+  setBusy(button, true, 'Deleting...');
+
+  try {
+    await productRequest('DELETE', { id: product.id });
+
+    if (String(editingId) === String(product.id)) {
+      cancelEdit();
+    }
+
+    show('Product delete हो गया।');
+    await loadProducts();
+  } catch (error) {
+    show('Delete error: ' + error.message);
+    setBusy(button, false);
+  }
+}
+
+/* LOAD CUSTOMER ORDERS */
+async function loadOrders() {
+  ordersList.textContent = 'Orders लोड हो रहे हैं...';
+
+  try {
+    const data = await orderRequest('GET');
+    orders = data.orders || [];
+    ordersList.replaceChildren();
+
+    if (!orders.length) {
+      ordersList.textContent = 'अभी कोई ऑर्डर नहीं आया है।';
+      return;
+    }
+
+    orders.forEach(order => {
+      const card = document.createElement('div');
+      card.className = 'order';
+
+      const title = document.createElement('h4');
+      title.textContent = 'Order: ' + (order.order_number || order.id);
+
+      const date = document.createElement('p');
+      const parsedDate = order.created_at
+        ? new Date(order.created_at)
+        : null;
+
+      date.textContent = 'Date: ' +
+        (parsedDate && !Number.isNaN(parsedDate.getTime())
+          ? parsedDate.toLocaleString('en-IN')
+          : 'Not available');
+
+      const customer = document.createElement('p');
+      customer.textContent = 'Customer: ' + (order.customer_name || 'N/A');
+
+      const phone = document.createElement('p');
+      phone.textContent = 'Mobile: ' + (order.customer_phone || 'N/A');
+
+      const phoneLink = document.createElement('a');
+      phoneLink.href = 'tel:' + String(order.customer_phone || '').replace(/[^\d+]/g, '');
+      phoneLink.textContent = 'Call Customer';
+      phoneLink.style.display = 'inline-block';
+      phoneLink.style.margin = '5px 0';
+
+      const address = document.createElement('p');
+      address.textContent = 'Address: ' + (order.customer_address || 'N/A');
+
+      const itemsBox = document.createElement('div');
+      itemsBox.className = 'order-items';
+
+      const itemsTitle = document.createElement('b');
+      itemsTitle.textContent = 'Products';
+
+      itemsBox.append(itemsTitle);
+
+      let items = order.items || [];
+      if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch { items = []; }
+      }
+
+      if (Array.isArray(items)) {
+        items.forEach(item => {
+          const line = document.createElement('p');
+          const name = item.name || item.product_name || ('Product ID ' + (item.id ?? ''));
+          const qty = Number(item.qty ?? item.quantity ?? 0);
+          const price = Number(item.price ?? 0);
+
+          line.textContent = `${name} × ${qty}` +
+            (price > 0 ? ` — ₹${(price * qty).toLocaleString('en-IN')}` : '');
+
+          itemsBox.append(line);
+        });
+      }
+
+      const total = Number(order.total_amount || 0);
+      const totalLine = document.createElement('p');
+      totalLine.innerHTML = '<b>Total: </b>';
+      const totalValue = document.createElement('span');
+      totalValue.textContent = '₹' + total.toLocaleString('en-IN');
+      totalLine.append(totalValue);
+
+      const tokenLine = document.createElement('p');
+      tokenLine.textContent =
+        '20% अनुमानित टोकन: ₹' +
+        (total * 0.2).toLocaleString('en-IN', {
+          maximumFractionDigits: 2
+        });
+
+      const note = document.createElement('p');
+      note.className = 'muted';
+      note.textContent =
+        'यह केवल अनुमानित टोकन राशि है। भुगतान की पुष्टि ग्राहक से संपर्क करके करें।';
+
+      const currentStatus = allowedStatuses.includes(order.status)
+        ? order.status
+        : 'Pending';
+
+      const statusLabel = document.createElement('p');
+      statusLabel.textContent = 'Current status: ' + currentStatus;
+
+      const select = document.createElement('select');
+      select.setAttribute('aria-label', 'Order status');
+
+      allowedStatuses.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        option.selected = status === currentStatus;
+        select.append(option);
+      });
+
+      const updateButton = document.createElement('button');
+      updateButton.className = 'success';
+      updateButton.type = 'button';
+      updateButton.textContent = 'Update Order Status';
+
+      updateButton.addEventListener('click', async () => {
+        setBusy(updateButton, true, 'Updating...');
+
+        try {
+          await orderRequest('PATCH', {
+            id: order.id,
+            status: select.value
+          });
+
+          show('Order status अपडेट हो गया।');
+          await loadOrders();
+        } catch (error) {
+          show('Order update error: ' + error.message);
+          setBusy(updateButton, false);
+        }
+      });
+
+      card.append(
+        title, date, customer, phone, phoneLink,
+        address, itemsBox, totalLine, tokenLine, note,
+        statusLabel, select, updateButton
+      );
+
+      ordersList.append(card);
+    });
+  } catch (error) {
+    ordersList.textContent = 'Orders लोड नहीं हुए: ' + error.message;
+    show('Orders error: ' + error.message);
+    throw error;
+  }
+}
+
+/* REFRESH BUTTONS */
+$('refreshBtn').addEventListener('click', loadProducts);
+$('refreshOrdersBtn').addEventListener('click', async () => {
+  const button = $('refreshOrdersBtn');
+  setBusy(button, true, 'Refreshing...');
+
+  try {
+    await loadOrders();
+    show('Orders refresh हो गए।');
+  } catch (error) {
+    show('Refresh error: ' + error.message);
+  } finally {
+    setBusy(button, false);
+  }
+});
+
+/* LOGOUT */
+async function logout() {
+  await supabase.auth.signOut();
+
+  panel.style.display = 'none';
+  loginBox.style.display = 'block';
+
+  productForm.reset();
+  editingId = null;
+  selectedImageFile = null;
+  currentImageUrl = '';
+  imagePreview.removeAttribute('src');
+  imagePreview.hidden = true;
+
+  $('formTitle').textContent = 'नया प्रोडक्ट जोड़ें';
+  saveBtn.textContent = 'Add Product';
+  $('cancelEditBtn').hidden = true;
+
+  show('Logout हो गया।');
+}
+
+$('logoutBtn').addEventListener('click', logout);
+</script>
+</body>
+  </html>

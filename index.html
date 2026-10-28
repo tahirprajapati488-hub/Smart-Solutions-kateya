@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="google-site-verification" content="nrcqnjikiysRXX2eNSxbDfucM3ieGNq8HEPefKgNIkY" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Solutions</title>
+<meta name="description" content="Shop quality products at retail prices from Smart Solutions Kateya.">
+<style>
+  :root{
+    --bg:#faf6f3;
+    --navy:#2a3355;
+    --red:#a3262a;
+    --card:#ffffff;
+    --border:#e6e0dc;
+    --muted:#6b7190;
+    --wa:#25d366;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--navy);padding-top:68px;min-height:100vh;
+  }
+  button,input,select{font-family:inherit}
+
+  /* ---------- Header ---------- */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:50;height:68px;background:#fff;
+    display:flex;align-items:center;gap:10px;padding:0 14px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);
+  }
+  .icon-btn{background:none;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;position:relative}
+  .icon-btn svg{width:27px;height:27px;stroke:var(--red);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .badge{
+    position:absolute;top:2px;right:0;min-width:18px;height:18px;padding:0 5px;border-radius:9px;
+    background:var(--red);color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center
+  }
+  .brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-decoration:none}
+  .brand img{height:30px;width:auto;display:none}
+  .brand .title{font-size:21px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- Overlay / drawers ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s}
+  .overlay.open{opacity:1;pointer-events:auto}
+  .drawer{
+    position:fixed;top:0;bottom:0;background:#fff;z-index:61;display:flex;flex-direction:column;
+    width:82%;max-width:340px;transition:transform .25s ease;
+  }
+  .drawer.left{left:0;transform:translateX(-100%)}
+  .drawer.right{right:0;transform:translateX(100%);max-width:400px}
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{padding:20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+  .drawer-head h3{font-size:20px;color:var(--navy)}
+  .close{background:none;border:0;font-size:30px;line-height:1;color:var(--muted);cursor:pointer}
+  .drawer-body{flex:1;overflow-y:auto;padding:6px 20px 20px}
+  .menu-link{
+    display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--border);
+    padding:15px 0;font-size:18px;color:var(--navy);text-decoration:none;cursor:pointer
+  }
+  .menu-sub{font-size:13px;font-weight:700;color:var(--muted);margin:20px 0 4px;letter-spacing:.3px}
+
+  /* ---------- Content ---------- */
+  main{padding:30px 18px 130px;max-width:1000px;margin:0 auto}
+  h1{font-size:32px;line-height:1.2;font-weight:700}
+  .notice{margin-top:28px;font-size:22px;line-height:1.55;font-weight:400}
+  h2{margin-top:32px;font-size:32px;font-weight:700}
+
+  /* ---------- Search + filters ---------- */
+  .search-wrap{margin-top:26px;display:flex;flex-direction:column;gap:10px}
+  .search-box{
+    display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);
+    border-radius:14px;padding:0 14px;box-shadow:0 2px 6px rgba(0,0,0,.06)
+  }
+  .search-box svg{width:22px;height:22px;stroke:var(--red);fill:none;stroke-width:2.4;stroke-linecap:round;flex:none}
+  .search-box input{flex:1;border:0;outline:none;padding:15px 0;font-size:17px;color:var(--navy);background:transparent;min-width:0}
+  .search-box .clear{display:none;background:none;border:0;font-size:22px;color:var(--muted);cursor:pointer}
+  .row{display:flex;gap:10px}
+  .row select{
+    flex:1;min-width:0;padding:13px 12px;font-size:15px;color:var(--navy);background:#fff;
+    border:1px solid var(--border);border-radius:12px;outline:none
+  }
+
+  .chips{display:flex;gap:10px;overflow-x:auto;padding:16px 2px 6px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:none;padding:10px 18px;border-radius:22px;border:1px solid var(--border);background:#fff;
+    color:var(--navy);font-size:15px;cursor:pointer;white-space:nowrap
+  }
+  .chip.active{background:var(--red);border-color:var(--red);color:#fff}
+
+  /* ---------- Category cards ---------- */
+  .section-title{margin-top:30px;font-size:24px;font-weight:700}
+  .grid{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:26px 22px}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,.08);color:var(--navy);display:flex;flex-direction:column;
+    text-decoration:none;cursor:pointer;text-align:left;
+  }
+  .card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#eee}
+  .cat-card .label{padding:14px 10px 16px;text-align:center;font-size:19px;line-height:1.4;font-weight:500}
+
+  /* ---------- Product cards ---------- */
+  .p-info{padding:12px 12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .p-name{font-size:16px;font-weight:600;line-height:1.35}
+  .p-cat{font-size:12px;color:var(--muted)}
+  .p-price{font-size:19px;font-weight:700;color:var(--red)}
+  .p-price small{font-size:12px;font-weight:400;color:var(--muted)}
+  .p-min{font-size:12px;color:var(--muted)}
+  .add-btn{
+    margin-top:auto;padding:11px;border:0;border-radius:10px;background:var(--navy);color:#fff;
+    font-size:15px;font-weight:600;cursor:pointer
+  }
+  .stepper{margin-top:auto;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--navy);border-radius:10px;overflow:hidden}
+  .stepper button{width:42px;height:40px;border:0;background:var(--navy);color:#fff;font-size:20px;cursor:pointer}
+  .stepper span{font-weight:700;font-size:16px}
+
+  .empty{
+    margin-top:24px;padding:34px 20px;text-align:center;background:#fff;border:1px dashed var(--border);
+    border-radius:14px;color:var(--muted);font-size:17px;line-height:1.5
+  }
+  .hidden{display:none !important}
+  .count{margin-top:6px;font-size:14px;color:var(--muted)}
+
+  /* ---------- Cart ---------- */
+  .cart-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+  .cart-item img{width:64px;height:64px;border-radius:10px;object-fit:cover;background:#eee;flex:none}
+  .ci-main{flex:1;min-width:0}
+  .ci-name{font-size:15px;font-weight:600;line-height:1.3}
+  .ci-price{font-size:14px;color:var(--muted);margin-top:2px}
+  .ci-ctrl{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .ci-ctrl button{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:18px;color:var(--navy);cursor:pointer}
+  .ci-ctrl .rm{width:auto;padding:0 10px;font-size:13px;color:var(--red);margin-left:auto}
+  .ci-total{font-weight:700;font-size:15px;white-space:nowrap}
+  .cart-foot{border-top:1px solid var(--border);padding:16px 20px 20px;background:#fff}
+  .sum{display:flex;justify-content:space-between;font-size:18px;font-weight:700;margin-bottom:6px}
+  .warn{font-size:13px;color:var(--red);margin-bottom:10px;min-height:18px}
+  .order-btn{
+    width:100%;padding:15px;border:0;border-radius:12px;background:var(--wa);color:#fff;
+    font-size:17px;font-weight:700;cursor:pointer
+  }
+  .order-btn:disabled{background:#b9c4bd;cursor:not-allowed}
+  .clear-cart{margin-top:10px;width:100%;background:none;border:0;color:var(--muted);font-size:14px;cursor:pointer}
+  .cart-empty{padding:40px 10px;text-align:center;color:var(--muted);font-size:16px}
+
+  /* ---------- Floating chat ---------- */
+  .chat{
+    position:fixed;right:18px;bottom:22px;z-index:40;display:flex;align-items:center;gap:10px;
+    background:#fff;border-radius:40px;padding:8px 18px 8px 10px;text-decoration:none;color:#111;
+    font-weight:700;font-size:22px;box-shadow:0 4px 14px rgba(0,0,0,.25);
+  }
+  .chat .wa{width:38px;height:38px;border-radius:50%;background:var(--wa);display:flex;align-items:center;justify-content:center}
+  .chat .wa svg{width:24px;height:24px;fill:#fff}
+
+  footer{padding:30px 18px 110px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+
+  @media (min-width:700px){
+    .grid{grid-template-columns:repeat(3,1fr)}
+    .search-wrap{flex-direction:row;flex-wrap:wrap}
+    .search-box{flex:2 1 320px}
+    .row{flex:1 1 320px}
+  }
+  @media (min-width:1000px){ .grid{grid-template-columns:repeat(4,1fr)} }
+  @media (max-width:480px){
+    h1,h2{font-size:28px}
+    .notice{font-size:20px}
+  }
+
+  /* Professional checkout feedback */
+  .checkout-field{display:block;width:100%;margin:0 0 11px}
+  .checkout-field input,.checkout-field textarea{display:block;width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--navy);font-size:16px;outline:none}
+  .checkout-field input:focus,.checkout-field textarea:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(42,51,85,.09)}
+  .checkout-field [aria-invalid="true"]{border-color:#c62828;background:#fffafa}
+  .field-error{display:none;color:#b42318;font-size:13px;line-height:1.4;margin:5px 2px 0}
+  .field-error.show{display:block}
+  .feedback-modal{display:none;position:fixed;inset:0;z-index:2000;background:rgba(16,20,32,.66);padding:18px;align-items:center;justify-content:center}
+  .feedback-modal.show{display:flex}
+  .feedback-card{width:100%;max-width:430px;max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:25px 22px;box-shadow:0 22px 70px rgba(0,0,0,.25);color:var(--navy);animation:popIn .18s ease-out}
+  @keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .feedback-icon{width:58px;height:58px;margin:0 auto 13px;border-radius:50%;display:grid;place-items:center;font-size:30px;font-weight:800}
+  .feedback-icon.success{background:#e7f7ed;color:#16834a}.feedback-icon.error{background:#fff0f0;color:#b42318}
+  .feedback-card h2{margin:0 0 9px;text-align:center;font-size:24px;line-height:1.25}
+  .feedback-card .feedback-lead{text-align:center;color:#626b80;font-size:14px;line-height:1.55;margin-bottom:18px}
+  .order-number-box{border:1px dashed #9ba7bc;background:#f7f8fb;border-radius:13px;padding:13px;margin:15px 0}
+  .order-number-label{font-size:12px;color:#69738b;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+  .order-number-value{font-size:15px;font-weight:800;overflow-wrap:anywhere;line-height:1.5;user-select:all}
+  .save-reminder{font-size:13px;line-height:1.55;background:#fff8e6;color:#775515;border-radius:11px;padding:12px;margin:13px 0 17px}
+  .feedback-actions{display:grid;gap:10px}
+  .feedback-action{width:100%;border:0;border-radius:11px;padding:14px 12px;font-size:15px;font-weight:750;cursor:pointer}
+  .feedback-action.primary{background:var(--red);color:#fff}.feedback-action.secondary{background:#eef1f6;color:var(--navy)}.feedback-action.ghost{background:transparent;color:#667085}
+  .feedback-error-detail{background:#fff5f5;border:1px solid #ffd9d9;border-radius:11px;padding:12px;color:#8f2020;font-size:14px;line-height:1.55;margin:14px 0}
+  #checkoutMessage{font-size:13px;line-height:1.5;margin-top:8px;color:#b42318}
+  @media(max-width:380px){.feedback-card{padding:22px 17px}.feedback-card h2{font-size:22px}}
+
+</style>
+</head>
+<body>
+
+<header>
+  <button class="icon-btn" id="menuBtn" aria-label="Menu">
+    <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  </button>
+  <a class="brand" href="index.html">
+    <img id="logo" alt="logo">
+    <span class="title" id="brandName">Swastik accessories</span>
+  </a>
+  <button class="icon-btn" id="searchBtn" aria-label="Search">
+    <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+  </button>
+  <button class="icon-btn" id="cartBtn" aria-label="Cart">
+    <svg viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.2a1.5 1.5 0 001.5 1.2h8.2a1.5 1.5 0 001.5-1.1L20.5 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>
+    <span class="badge" id="cartBadge">0</span>
+  </button>
+  <button type="button" id="openTrackOrder" style="background:#a3262a;color:white;border:0;border-radius:9px;padding:9px 10px;font-size:12px;font-weight:700;white-space:nowrap;">
+  Track Order
+  </button>
+</header>
+
+  <!-- Track Order Modal -->
+<div id="trackOrderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+
+  <div style="background:white;width:100%;max-width:400px;border-radius:16px;padding:22px;position:relative;color:#2a3355;">
+
+    <button type="button" id="closeTrackOrder" aria-label="Close"
+      style="position:absolute;right:14px;top:10px;border:0;background:none;font-size:28px;cursor:pointer;color:#6b7190;">
+      &times;
+    </button>
+
+    <h2 style="margin:0 0 10px;font-size:25px;">Track My Order</h2>
+
+    <p style="margin-bottom:18px;font-size:14px;">
+      अपना ऑर्डर देखने के लिए Order Number और मोबाइल नंबर डालें।
+    </p>
+
+    <form id="trackOrderForm">
+
+      <input
+        id="trackOrderNumber"
+        type="text"
+        placeholder="Order Number"
+        maxlength="100"
+        required
+        style="width:100%;padding:13px;border:1px solid #e6e0dc;border-radius:9px;margin-bottom:12px;"
+      >
+
+      <input
+        id="trackOrderPhone"
+        type="tel"
+        placeholder="Registered Mobile Number"
+        pattern="[6-9][0-9]{9}"
+        maxlength="10"
+        inputmode="numeric"
+        required
+        style="width:100%;padding:13px;border:1px solid #e6e0dc;border-radius:9px;margin-bottom:14px;"
+      >
+
+      <button
+        id="trackSubmitBtn"
+        type="submit"
+        style="width:100%;padding:14px;background:#a3262a;color:white;border:0;border-radius:9px;font-weight:700;font-size:16px;">
+        Track Order
+      </button>
+
+    </form>
+
+    <div id="trackOrderResult" role="status" aria-live="polite"
+      style="margin-top:16px;font-size:14px;overflow-wrap:anywhere;">
+    </div>
+
+  </div>
+</div>
+<!-- Professional order success / error popup -->
+<div class="feedback-modal" id="feedbackModal" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle" aria-describedby="feedbackLead">
+  <div class="feedback-card">
+    <div class="feedback-icon success" id="feedbackIcon" aria-hidden="true">✓</div>
+    <h2 id="feedbackTitle">ऑर्डर रिक्वेस्ट सफल!</h2>
+    <p class="feedback-lead" id="feedbackLead">आपकी ऑर्डर रिक्वेस्ट मिल गई है। नीचे दिया गया ऑर्डर नंबर सुरक्षित रखें।</p>
+    <div class="order-number-box" id="successOrderBox">
+      <div class="order-number-label">आपका Order Number</div>
+      <div class="order-number-value" id="successOrderNumber"></div>
+    </div>
+    <div class="save-reminder" id="successReminder">📌 <strong>ज़रूरी:</strong> Order Number कॉपी कर लें या इस स्क्रीन का स्क्रीनशॉट ले लें। ऑर्डर ट्रैक करने के लिए यही नंबर और अपना रजिस्टर्ड मोबाइल नंबर चाहिए होगा। हमारी टीम आपसे संपर्क करके टोकन राशि और ऑर्डर कन्फर्म करेगी।</div>
+    <div class="feedback-error-detail" id="feedbackErrorDetail" style="display:none"></div>
+    <div class="feedback-actions">
+      <button class="feedback-action primary" id="copyOrderNumber" type="button">📋 Order Number कॉपी करें</button>
+      <button class="feedback-action secondary" id="trackFromSuccess" type="button">ऑर्डर ट्रैक करें</button>
+      <button class="feedback-action ghost" id="closeFeedback" type="button">ठीक है, बंद करें</button>
+    </div>
+  </div>
+</div>
+
+<!-- Side menu -->
+<div class="overlay" id="overlay"></div>
+<nav class="drawer left" id="menuDrawer">
+  <div class="drawer-head"><h3 id="drawerTitle">Swastik accessories</h3><button class="close" data-close>&times;</button></div>
+  <div class="drawer-body">
+    <button class="menu-link" id="mHome">Home</button>
+    <button class="menu-link" id="mAll">All Products</button>
+    <button class="menu-link" id="mCart">My Cart</button>
+    <div class="menu-sub">CATEGORIES</div>
+    <div id="menuCats"></div>
+    <div class="menu-sub">HELP</div>
+    <a class="menu-link" id="mWa" href="#" target="_blank" rel="noopener">Contact on WhatsApp</a>
+    <button class="menu-link" id="mRules">Order Rules</button>
+  </div>
+</nav>
+
+<!-- Cart drawer -->
+<aside class="drawer right" id="cartDrawer">
+  <div class="drawer-head"><h3>My Cart</h3><button class="close" data-close>&times;</button></div>
+  <div class="drawer-body" id="cartBody"></div>
+  <div class="cart-foot" id="cartFoot">
+    <div class="sum"><span>Total</span><span id="cartTotal">₹0</span></div>
+    <div class="warn" id="cartWarn"></div>
+    <form id="checkoutForm" novalidate>
+  <label class="checkout-field" for="customerName">
+    <input id="customerName" name="customer_name" type="text" placeholder="आपका पूरा नाम" maxlength="150" autocomplete="name" aria-describedby="customerNameError">
+    <span class="field-error" id="customerNameError"></span>
+  </label>
+
+  <label class="checkout-field" for="customerPhone">
+    <input id="customerPhone" name="customer_phone" type="tel" placeholder="10 अंकों का मोबाइल नंबर" maxlength="10" inputmode="numeric" autocomplete="tel" aria-describedby="customerPhoneError">
+    <span class="field-error" id="customerPhoneError"></span>
+  </label>
+
+  <label class="checkout-field" for="customerAddress">
+    <textarea id="customerAddress" name="customer_address" placeholder="पूरा डिलीवरी पता और पिन कोड" maxlength="1000" rows="3" autocomplete="street-address" aria-describedby="customerAddressError"></textarea>
+    <span class="field-error" id="customerAddressError"></span>
+  </label>
+
+  <button class="order-btn" id="orderBtn" type="submit">
+    Place Order
+  </button>
+</form>
+
+<button class="clear-cart" id="clearCart">Clear cart</button>
+
+<p id="checkoutMessage" role="status"></p>
+  </div>
+</aside>
+
+<main>
+  <h1>Welcome to Smart Solutions</h1>
+
+<p class="notice" id="rules">
+  Shop your favourite products at retail prices.<br>
+  Place your order online. Our team will contact you to confirm your order and token amount. Delivery charges, if any, will be confirmed by the seller.
+</p>
+
+<h2>Our Products</h2>
+
+  <!-- Search + filters -->
+  <div class="search-wrap" id="searchWrap">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+      <input type="search" id="searchInput" placeholder="Search products or categories..." autocomplete="off">
+      <button class="clear" id="searchClear" aria-label="Clear">&times;</button>
+    </div>
+    <div class="row">
+      <select id="catSelect" aria-label="Category"></select>
+      <select id="sortSelect" aria-label="Sort">
+        <option value="default">Sort: Default</option>
+        <option value="low">Price: Low to High</option>
+        <option value="high">Price: High to Low</option>
+        <option value="az">Name: A to Z</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="chips" id="chips"></div>
+
+  <!-- Category cards (home view) -->
+  <section id="catSection">
+    <div class="grid" id="catGrid"></div>
+  </section>
+
+  <!-- Products -->
+  <section id="prodSection" class="hidden">
+    <div class="section-title" id="prodTitle">All Products</div>
+    <div class="count" id="prodCount"></div>
+    <div class="grid" id="prodGrid"></div>
+  </section>
+
+  <div class="empty hidden" id="emptyMsg"></div>
+</main>
+
+<footer>
+  <div id="footBrand">Swastik accessories</div>
+  <div>Retail Shopping | Order Online | Customer Support</div>
+</footer>
+
+<a class="chat" id="chatBtn" href="#" target="_blank" rel="noopener">
+  <span class="wa">
+    <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 004.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2zm5.8 14.2c-.25.69-1.45 1.32-2 1.4-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.8-4.17-4.94-4.37-.14-.19-1.18-1.57-1.18-3 0-1.43.75-2.13 1.01-2.42.27-.29.58-.36.78-.36l.56.01c.18.01.42-.07.66.5.25.6.85 2.07.92 2.22.08.15.13.32.03.51-.1.2-.15.32-.3.49-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.35 1.46.29.15.46.12.63-.07.17-.2.73-.85.92-1.14.2-.29.39-.24.66-.14.27.1 1.7.8 1.99.95.29.15.49.22.56.34.07.12.07.7-.18 1.39z"/></svg>
+  </span>
+  CHAT
+</a>
+
+<script>
+/* =====================================================
+   CONFIG — sirf yahan apni details badlo
+   ===================================================== */
+const CONFIG = {
+  brandName: "Smart Solutions",
+  logo: "",                 // logo ka path/URL (khali = sirf naam)
+  whatsapp: "918603611319"// country code ke saath, bina + ke           // minimum wholesale order (₹)
+};
+
+/* =====================================================
+   CATEGORIES — home page pe cards + filter me aayengi
+   { name: "Viral Toys and gifting products", image: "images/toys.jpg" }
+   ===================================================== */
+const CATEGORIES = [
+  // { name: "Category name", image: "images/category.jpg" },
+];
+
+/* =====================================================
+   PRODUCTS — abhi khali hai. Aise add karo:
+   { id: "p1", name: "Cat Plush Backpack", category: "Category name",
+     price: 250, minQty: 6, image: "images/p1.jpg" }
+   (category ka naam upar CATEGORIES wale naam se same hona chahiye)
+   ===================================================== */
+let PRODUCTS = [];
+
+/* ===================================================== */
+const $ = id => document.getElementById(id);
+const rupee = n => "₹" + Number(n).toLocaleString("en-IN");
+const PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="100%" height="100%" fill="#eee"/></svg>');
+
+  async function loadProducts() {
+  try {
+    const response = await fetch("/api/products");
+    if (!response.ok) throw new Error("Products load nahi hue");
+
+    const data = await response.json();
+
+    PRODUCTS = (data.products || []).map(p => ({
+      id: String(p.id),
+      name: p.name,
+      category: p.category || "Other",
+      price: Number(p.price),
+      stock: Number(p.stock),
+      minQty: 1,
+      image: p.image_url || "",
+      description: p.description || ""
+    }));
+
+    render();
+    renderCart();
+  } catch (error) {
+    console.error(error);
+    $("emptyMsg").textContent =
+      "Products load nahi hue. Kripya thodi der baad try karein.";
+    $("emptyMsg").classList.remove("hidden");
+  }
+  }
+  
+let state = { cat: "All", q: "", sort: "default", view: "products" };
+let cart = {};
+try { cart = JSON.parse(localStorage.getItem("cart_v1") || "{}"); } catch(e){ cart = {}; }
+const saveCart = () => { try { localStorage.setItem("cart_v1", JSON.stringify(cart)); } catch(e){} };
+
+/* ---------- Setup ---------- */
+document.title = CONFIG.brandName;
+$("brandName").textContent = CONFIG.brandName;
+$("drawerTitle").textContent = CONFIG.brandName;
+$("footBrand").textContent = CONFIG.brandName;
+if (CONFIG.logo) { $("logo").src = CONFIG.logo; $("logo").style.display = "block"; }
+const waBase = "https://wa.me/" + CONFIG.whatsapp;
+$("chatBtn").href = waBase + "?text=" + encodeURIComponent("Hello, I want to place a wholesale order.");
+$("mWa").href = $("chatBtn").href;
+
+/* Category list = CATEGORIES + koi extra category jo products me ho */
+function allCategoryNames(){
+  const names = CATEGORIES.map(c => c.name);
+  PRODUCTS.forEach(p => { if (p.category && !names.includes(p.category)) names.push(p.category); });
+  return names;
+}
+function catImage(name){
+  const c = CATEGORIES.find(c => c.name === name);
+  if (c && c.image) return c.image;
+  const p = PRODUCTS.find(p => p.category === name);
+  return p ? p.image : PLACEHOLDER;
+}
+
+/* ---------- Drawers ---------- */
+function openDrawer(el){ el.classList.add("open"); $("overlay").classList.add("open"); }
+function closeDrawers(){ document.querySelectorAll(".drawer").forEach(d => d.classList.remove("open")); $("overlay").classList.remove("open"); }
+$("overlay").onclick = closeDrawers;
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = closeDrawers);
+$("menuBtn").onclick = () => openDrawer($("menuDrawer"));
+$("cartBtn").onclick = () => { renderCart(); openDrawer($("cartDrawer")); };
+$("mCart").onclick = () => { closeDrawers(); renderCart(); openDrawer($("cartDrawer")); };
+$("searchBtn").onclick = () => { $("searchWrap").scrollIntoView({behavior:"smooth", block:"center"}); setTimeout(()=>$("searchInput").focus(), 350); };
+$("mHome").onclick = () => { closeDrawers(); goHome(); };
+$("mAll").onclick = () => { closeDrawers(); setCat("All", true); };
+$("mRules").onclick = () => { closeDrawers(); $("rules").scrollIntoView({behavior:"smooth", block:"center"}); };
+
+/* ---------- Navigation helpers ---------- */
+function goHome(){
+  state = { cat: "All", q: "", sort: "default", view: "home" };
+  $("searchInput").value = ""; $("sortSelect").value = "default";
+  render(); window.scrollTo({top:0, behavior:"smooth"});
+}
+function setCat(name, showProducts){
+  state.cat = name;
+  if (showProducts || name !== "All") state.view = "products";
+  render();
+  if (state.view === "products") $("chips").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ---------- Filters ---------- */
+$("searchInput").addEventListener("input", e => {
+  state.q = e.target.value.trim().toLowerCase();
+  state.view = (state.q || state.cat !== "All") ? "products" : "home";
+  render();
+});
+$("searchClear").onclick = () => { $("searchInput").value = ""; state.q = ""; state.view = state.cat === "All" ? "home" : "products"; render(); };
+$("catSelect").onchange = e => setCat(e.target.value, false);
+$("sortSelect").onchange = e => { state.sort = e.target.value; if (state.view === "home") state.view = "products"; render(); };
+
+/* ---------- Render ---------- */
+function render(){
+  const cats = allCategoryNames();
+
+  // category select
+  const sel = $("catSelect");
+  sel.innerHTML = "";
+  ["All", ...cats].forEach(n => {
+    const o = document.createElement("option");
+    o.value = n; o.textContent = n === "All" ? "All Categories" : n;
+    if (n === state.cat) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  // chips
+  const chips = $("chips"); chips.innerHTML = "";
+  ["All", ...cats].forEach(n => {
+    const b = document.createElement("button");
+    b.className = "chip" + (n === state.cat ? " active" : "");
+    b.textContent = n === "All" ? "All" : n;
+    b.onclick = () => { if (n === "All") { state.cat = "All"; state.view = state.q ? "products" : "home"; render(); } else setCat(n, true); };
+    chips.appendChild(b);
+  });
+  chips.classList.toggle("hidden", cats.length === 0);
+
+  // side menu categories
+  const mc = $("menuCats"); mc.innerHTML = "";
+  if (cats.length === 0){
+    const d = document.createElement("div"); d.className = "menu-link"; d.style.color = "var(--muted)"; d.textContent = "Coming soon"; mc.appendChild(d);
+  }
+  cats.forEach(n => {
+    const b = document.createElement("button"); b.className = "menu-link"; b.textContent = n;
+    b.onclick = () => { closeDrawers(); setCat(n, true); };
+    mc.appendChild(b);
+  });
+
+  $("searchClear").style.display = state.q ? "block" : "none";
+
+  // category cards
+  const cg = $("catGrid"); cg.innerHTML = "";
+  cats.forEach(n => {
+    const a = document.createElement("button");
+    a.className = "card cat-card";
+    const img = document.createElement("img"); img.loading = "lazy"; img.src = catImage(n); img.alt = n;
+    img.onerror = () => { img.src = PLACEHOLDER; };
+    const lb = document.createElement("div"); lb.className = "label"; lb.textContent = n;
+    a.append(img, lb);
+    a.onclick = () => setCat(n, true);
+    cg.appendChild(a);
+  });
+
+  // products
+  let list = PRODUCTS.filter(p =>
+    (state.cat === "All" || p.category === state.cat) &&
+    (!state.q || (p.name + " " + (p.category||"")).toLowerCase().includes(state.q))
+  );
+  if (state.sort === "low") list.sort((a,b) => a.price - b.price);
+  if (state.sort === "high") list.sort((a,b) => b.price - a.price);
+  if (state.sort === "az") list.sort((a,b) => a.name.localeCompare(b.name));
+
+  const showProducts = state.view === "products";
+  $("catSection").classList.toggle("hidden", showProducts || cats.length === 0);
+  $("prodSection").classList.toggle("hidden", !showProducts || list.length === 0);
+
+  $("prodTitle").textContent = state.cat === "All" ? (state.q ? "Search results" : "All Products") : state.cat;
+  $("prodCount").textContent = list.length + (list.length === 1 ? " product" : " products");
+
+  const pg = $("prodGrid"); pg.innerHTML = "";
+  list.forEach(p => pg.appendChild(productCard(p)));
+
+  // empty states
+  const em = $("emptyMsg");
+  if (PRODUCTS.length === 0 && CATEGORIES.length === 0){
+    em.textContent = "Products jaldi add kiye jayenge. Order ke liye CHAT button se WhatsApp par contact karein.";
+    em.classList.remove("hidden");
+  } else if (showProducts && list.length === 0){
+    em.textContent = "Koi product nahi mila. Dusra naam ya category try karein.";
+    em.classList.remove("hidden");
+  } else em.classList.add("hidden");
+
+  updateBadge();
+}
+
+function productCard(p){
+  const card = document.createElement("div"); card.className = "card";
+  const img = document.createElement("img"); img.loading = "lazy"; img.src = p.image || PLACEHOLDER; img.alt = p.name;
+  img.onerror = () => { img.src = PLACEHOLDER; };
+  const info = document.createElement("div"); info.className = "p-info";
+  const nm = document.createElement("div"); nm.className = "p-name"; nm.textContent = p.name;
+  const ct = document.createElement("div"); ct.className = "p-cat"; ct.textContent = p.category || "";
+  const pr = document.createElement("div"); pr.className = "p-price"; pr.innerHTML = rupee(p.price) + " <small>/ piece</small>";
+  info.append(nm, ct, pr);
+  const min = p.minQty || 1;
+  if (min > 1){ const m = document.createElement("div"); m.className = "p-min"; m.textContent = "Min. order: " + min + " pcs"; info.appendChild(m); }
+
+  const q = cart[p.id] ? cart[p.id].qty : 0;
+  if (q > 0){
+    const st = document.createElement("div"); st.className = "stepper";
+    const minus = document.createElement("button"); minus.textContent = "−";
+    const sp = document.createElement("span"); sp.textContent = q;
+    const plus = document.createElement("button"); plus.textContent = "+";
+    minus.onclick = () => changeQty(p.id, -1);
+    plus.onclick = () => changeQty(p.id, +1);
+    st.append(minus, sp, plus); info.appendChild(st);
+  } else {
+    const ab = document.createElement("button"); ab.className = "add-btn"; ab.textContent = "Add to cart";
+    ab.onclick = () => addToCart(p);
+    info.appendChild(ab);
+  }
+  card.append(img, info);
+  return card;
+}
+
+/* ---------- Cart ---------- */
+function findProduct(id){ return PRODUCTS.find(p => p.id === id); }
+function addToCart(p){ cart[p.id] = { qty: p.minQty || 1 }; saveCart(); render(); renderCart(); }
+function changeQty(id, d){
+  const p = findProduct(id); if (!p || !cart[id]) return;
+  const min = p.minQty || 1;
+  let q = cart[id].qty + d;
+  if (d < 0 && cart[id].qty <= min) q = 0;      // min qty se neeche = remove
+  if (q <= 0) delete cart[id]; else cart[id].qty = q;
+  saveCart(); render(); renderCart();
+}
+function cartTotal(){
+  return Object.keys(cart).reduce((s, id) => { const p = findProduct(id); return p ? s + p.price * cart[id].qty : s; }, 0);
+}
+function updateBadge(){
+  const n = Object.keys(cart).filter(id => findProduct(id)).length;
+  const b = $("cartBadge"); b.textContent = n; b.style.display = n ? "flex" : "none";
+}
+function renderCart(){
+  const body = $("cartBody"); body.innerHTML = "";
+  const ids = Object.keys(cart).filter(id => findProduct(id));
+  $("cartFoot").classList.toggle("hidden", ids.length === 0);
+  if (!ids.length){
+    const e = document.createElement("div"); e.className = "cart-empty"; e.textContent = "Aapka cart khali hai."; body.appendChild(e); return;
+  }
+  ids.forEach(id => {
+    const p = findProduct(id), q = cart[id].qty;
+    const row = document.createElement("div"); row.className = "cart-item";
+    const img = document.createElement("img"); img.src = p.image || PLACEHOLDER; img.alt = p.name; img.onerror = () => { img.src = PLACEHOLDER; };
+    const main = document.createElement("div"); main.className = "ci-main";
+    const nm = document.createElement("div"); nm.className = "ci-name"; nm.textContent = p.name;
+    const pr = document.createElement("div"); pr.className = "ci-price"; pr.textContent = rupee(p.price) + " x " + q;
+    const ctrl = document.createElement("div"); ctrl.className = "ci-ctrl";
+    const mi = document.createElement("button"); mi.textContent = "−"; mi.onclick = () => changeQty(id, -1);
+    const qs = document.createElement("span"); qs.textContent = q;
+    const pl = document.createElement("button"); pl.textContent = "+"; pl.onclick = () => changeQty(id, +1);
+    const rm = document.createElement("button"); rm.className = "rm"; rm.textContent = "Remove";
+    rm.onclick = () => { delete cart[id]; saveCart(); render(); renderCart(); };
+    ctrl.append(mi, qs, pl, rm);
+    main.append(nm, pr, ctrl);
+    const tot = document.createElement("div"); tot.className = "ci-total"; tot.textContent = rupee(p.price * q);
+    row.append(img, main, tot);
+    body.appendChild(row);
+  });
+  const total = cartTotal();
+  $("cartTotal").textContent = rupee(total);
+  $("cartWarn").textContent = "";
+$("orderBtn").disabled = false;
+}
+$("clearCart").onclick = () => { cart = {}; saveCart(); render(); renderCart(); };
+function setFieldError(fieldId, message) {
+  const field = $(fieldId);
+  const error = $(fieldId + "Error");
+  field.setAttribute("aria-invalid", message ? "true" : "false");
+  error.textContent = message || "";
+  error.classList.toggle("show", Boolean(message));
+}
+function clearCheckoutErrors() {
+  ["customerName", "customerPhone", "customerAddress"].forEach(id => setFieldError(id, ""));
+  $("checkoutMessage").textContent = "";
+}
+function showFeedback(type, options = {}) {
+  const success = type === "success";
+  $("feedbackIcon").className = "feedback-icon " + (success ? "success" : "error");
+  $("feedbackIcon").textContent = success ? "✓" : "!";
+  $("feedbackTitle").textContent = success ? "ऑर्डर रिक्वेस्ट सफल!" : (options.title || "ऑर्डर पूरा नहीं हो सका");
+  $("feedbackLead").textContent = success
+    ? "आपकी ऑर्डर रिक्वेस्ट सफलतापूर्वक भेज दी गई है। नीचे दिया गया नंबर सुरक्षित रखें।"
+    : (options.message || "कृपया जानकारी जाँचकर दोबारा कोशिश करें।");
+  $("successOrderBox").style.display = success ? "block" : "none";
+  $("successReminder").style.display = success ? "block" : "none";
+  $("copyOrderNumber").style.display = success ? "block" : "none";
+  $("trackFromSuccess").style.display = success ? "block" : "none";
+  $("closeFeedback").textContent = success ? "ठीक है, बंद करें" : "समझ गया";
+  $("feedbackErrorDetail").style.display = success || !options.detail ? "none" : "block";
+  $("feedbackErrorDetail").textContent = options.detail || "";
+  if (success) $("successOrderNumber").textContent = options.orderNumber || "";
+  $("feedbackModal").classList.add("show");
+  document.body.style.overflow = "hidden";
+  $("closeFeedback").focus();
+}
+function closeFeedback() {
+  $("feedbackModal").classList.remove("show");
+  document.body.style.overflow = "";
+}
+["customerName", "customerPhone", "customerAddress"].forEach(id => {
+  $(id).addEventListener("input", () => setFieldError(id, ""));
+});
+$("checkoutForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearCheckoutErrors();
+  const ids = Object.keys(cart).filter(id => findProduct(id));
+  if (!ids.length) {
+    showFeedback("error", {title:"कार्ट खाली है", message:"ऑर्डर करने से पहले कृपया कम से कम एक प्रोडक्ट कार्ट में जोड़ें।"});
+    return;
+  }
+
+  const name = $("customerName").value.trim();
+  const phone = $("customerPhone").value.replace(/\D/g, "");
+  const address = $("customerAddress").value.trim();
+  let firstInvalid = null;
+  if (name.length < 2) { setFieldError("customerName", "कृपया अपना पूरा नाम भरें (कम से कम 2 अक्षर)।"); firstInvalid ||= $("customerName"); }
+  if (!/^[6-9][0-9]{9}$/.test(phone)) { setFieldError("customerPhone", "कृपया सही 10 अंकों का मोबाइल नंबर डालें, जो 6, 7, 8 या 9 से शुरू हो।"); firstInvalid ||= $("customerPhone"); }
+  if (address.length < 8) { setFieldError("customerAddress", "कृपया पूरा डिलीवरी पता और PIN कोड भरें।"); firstInvalid ||= $("customerAddress"); }
+  if (firstInvalid) {
+    firstInvalid.focus();
+    $("checkoutMessage").textContent = "लाल रंग में दिखाई गई जानकारी सही करें, फिर दोबारा ऑर्डर करें।";
+    return;
+  }
+
+  const button = $("orderBtn");
+  button.disabled = true;
+  button.textContent = "ऑर्डर भेजा जा रहा है…";
+  try {
+    const payload = {
+      customer_name: name,
+      customer_phone: phone,
+      customer_address: address,
+      items: ids.map(id => ({ id: Number(id), qty: Number(cart[id].qty) }))
+    };
+    const response = await fetch("/api/orders", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    let data;
+    try { data = await response.json(); }
+    catch (_) { throw new Error("सर्वर से सही जवाब नहीं मिला। आपका ऑर्डर कन्फर्म हुआ है या नहीं, यह जाँचने के लिए दोबारा प्रयास करने से पहले दुकान से संपर्क करें।"); }
+    if (!response.ok) {
+      const raw = data.error || data.message || "";
+      let friendly = "ऑर्डर सर्वर तक नहीं पहुँच सका। कृपया इंटरनेट जाँचकर कुछ देर बाद दोबारा कोशिश करें।";
+      if (response.status === 400) friendly = raw || "जानकारी अधूरी या गलत है। नाम, मोबाइल नंबर और पता जाँचें।";
+      else if (response.status === 429) friendly = "बहुत जल्दी-जल्दी प्रयास किए गए हैं। कृपया एक-दो मिनट बाद कोशिश करें।";
+      else if (response.status >= 500) friendly = "दुकान के सर्वर में अस्थायी समस्या है। आपकी रिक्वेस्ट कन्फर्म नहीं हो सकी। कृपया थोड़ी देर बाद कोशिश करें या दुकान से संपर्क करें।";
+      showFeedback("error", {title:"ऑर्डर भेजने में समस्या", message:friendly, detail:"कृपया नाम, मोबाइल नंबर और पता जाँचें। समस्या बनी रहे तो दुकान से संपर्क करें। अगर पहले से ऑर्डर नंबर मिला हो या पैसे कटे हों, तो दोबारा ऑर्डर करने से पहले पुष्टि करें।"});
+      return;
+    }
+
+    const orderNumber = data.order_number || data.orderNumber || data.order?.order_number;
+    if (!orderNumber) {
+      showFeedback("error", {title:"ऑर्डर की पुष्टि नहीं मिली", message:"सर्वर से ऑर्डर नंबर नहीं मिला, इसलिए हम ऑर्डर सफल होने की पुष्टि नहीं कर पा रहे हैं। दोबारा ऑर्डर करने से पहले दुकान से संपर्क करें।", detail:data.error || "Response में order_number उपलब्ध नहीं था।"});
+      return;
+    }
+
+    const savedPhone = phone;
+    cart = {};
+    saveCart();
+    render();
+    renderCart();
+    $("checkoutForm").reset();
+    showFeedback("success", {orderNumber:String(orderNumber)});
+    $("copyOrderNumber").dataset.orderNumber = String(orderNumber);
+    $("trackFromSuccess").dataset.phone = savedPhone;
+  } catch (error) {
+    console.error("Order submit error:", error);
+    showFeedback("error", {title:"कनेक्शन में समस्या", message:"ऑर्डर भेजते समय कनेक्शन या सर्वर की समस्या आई। कृपया इंटरनेट जाँचें। अगर पहले से ऑर्डर नंबर मिला हो या भुगतान किया हो, तो दोबारा ऑर्डर करने से पहले दुकान से पुष्टि करें।", detail:"इंटरनेट कनेक्शन जाँचें और थोड़ी देर बाद कोशिश करें। अगर समस्या बनी रहे तो दुकान से संपर्क करें।"});
+  } finally {
+    button.disabled = false;
+    button.textContent = "Place Order";
+  }
+});
+
+$("copyOrderNumber").addEventListener("click", async () => {
+  const value = $("copyOrderNumber").dataset.orderNumber || $("successOrderNumber").textContent;
+  try {
+    await navigator.clipboard.writeText(value);
+    $("copyOrderNumber").textContent = "✓ Order Number कॉपी हो गया";
+  } catch (_) {
+    const range = document.createRange();
+    range.selectNodeContents($("successOrderNumber"));
+    const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+    $("copyOrderNumber").textContent = "नंबर सेलेक्ट है — Copy करें";
+  }
+});
+$("trackFromSuccess").addEventListener("click", () => {
+  const number = $("copyOrderNumber").dataset.orderNumber || $("successOrderNumber").textContent;
+  const phone = $("trackFromSuccess").dataset.phone || "";
+  closeFeedback();
+  $("trackOrderNumber").value = number;
+  $("trackOrderPhone").value = phone;
+  $("trackOrderResult").textContent = "";
+  $("trackOrderModal").style.display = "flex";
+});
+$("closeFeedback").addEventListener("click", closeFeedback);
+$("feedbackModal").addEventListener("click", event => { if (event.target === $("feedbackModal")) closeFeedback(); });
+
+  /* ---------- Track My Order ---------- */
+
+const trackModal = $("trackOrderModal");
+
+$("openTrackOrder").addEventListener("click", () => {
+  trackModal.style.display = "flex";
+  $("trackOrderResult").textContent = "";
+});
+
+$("closeTrackOrder").addEventListener("click", () => {
+  trackModal.style.display = "none";
+});
+
+trackModal.addEventListener("click", event => {
+  if (event.target === trackModal) {
+    trackModal.style.display = "none";
+  }
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    trackModal.style.display = "none";
+    closeFeedback();
+  }
+});
+
+$("trackOrderForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const result = $("trackOrderResult");
+  const button = $("trackSubmitBtn");
+
+  const orderNumber = $("trackOrderNumber").value.trim();
+  const phone = $("trackOrderPhone").value.trim();
+
+  button.disabled = true;
+  button.textContent = "Searching...";
+  result.textContent = "आपका ऑर्डर खोजा जा रहा है...";
+
+  try {
+    const response = await fetch("/api/track-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        order_number: orderNumber,
+        customer_phone: phone
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "ऑर्डर नहीं मिला। जानकारी चेक करें।"
+      );
+    }
+
+    result.replaceChildren();
+    result.style.color = "#176b45";
+    result.style.background = "#f0fbf4";
+    result.style.padding = "12px";
+    result.style.borderRadius = "9px";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Your Order Details";
+    heading.style.marginBottom = "10px";
+    result.appendChild(heading);
+
+    const details = [
+      ["Order Number", data.order_number],
+      ["Order Status", data.status],
+      ["Total Amount", "₹" + Number(data.total_amount).toLocaleString("en-IN")],
+      ["Order Date", new Date(data.created_at).toLocaleString("en-IN")]
+    ];
+
+    details.forEach(([label, value]) => {
+      const p = document.createElement("p");
+      p.style.margin = "8px 0";
+      p.textContent = label + ": " + value;
+      result.appendChild(p);
+    });
+
+  } catch (error) {
+    result.textContent = error.message || "ऑर्डर खोजते समय समस्या हुई। कृपया ऑर्डर नंबर और मोबाइल नंबर जाँचकर दोबारा कोशिश करें।";
+    result.style.color = "#b42318";
+    result.style.background = "#fff5f5";
+    result.style.padding = "10px";
+    result.style.borderRadius = "9px";
+  } finally {
+    button.disabled = false;
+    button.textContent = "Track Order";
+  }
+});
+
+/* ---------- Start ---------- */
+render();
+renderCart();
+loadProducts();
+</script>
+</body>
+</html>
