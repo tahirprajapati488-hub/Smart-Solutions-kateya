@@ -24,6 +24,20 @@
   }
   button,input,select{font-family:inherit}
 
+
+  .product-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+  .buy-now-btn{border:0;border-radius:9px;padding:11px 12px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;width:100%}
+  .add-btn{width:100%}
+  .product-detail-modal{display:none;position:fixed;inset:0;z-index:1500;background:rgba(15,18,30,.68);padding:16px;align-items:center;justify-content:center}
+  .product-detail-modal.show{display:flex}
+  .product-detail-card{background:#fff;border-radius:16px;width:min(100%,520px);max-height:90vh;overflow:auto;padding:18px;position:relative;color:var(--navy)}
+  .detail-close{position:absolute;right:12px;top:8px;border:0;background:#f1f1f1;border-radius:50%;width:36px;height:36px;font-size:24px;cursor:pointer;z-index:2}
+  .detail-main-image{width:100%;height:260px;object-fit:contain;background:#f8f8f8;border-radius:10px}
+  .detail-thumbs{display:flex;gap:8px;overflow-x:auto;margin:10px 0}
+  .detail-thumb{width:58px;height:58px;object-fit:cover;border:1px solid var(--border);border-radius:7px;cursor:pointer;flex:none}
+  .detail-title{font-size:22px;margin:8px 0}.detail-description{white-space:pre-wrap;line-height:1.5;margin:10px 0;color:#555}
+  .detail-price{font-size:21px;font-weight:700;margin:10px 0}
+
   /* ---------- Header ---------- */
   header{
     position:fixed;top:0;left:0;right:0;z-index:50;height:68px;background:#fff;
@@ -269,6 +283,21 @@
 
   </div>
 </div>
+
+<div class="product-detail-modal" id="productDetailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="product-detail-card">
+    <button type="button" class="detail-close" id="detailClose" aria-label="Close">&times;</button>
+    <img id="detailMainImage" class="detail-main-image" alt="Product image">
+    <div id="detailThumbs" class="detail-thumbs"></div>
+    <h2 id="detailTitle" class="detail-title"></h2>
+    <div id="detailPrice" class="detail-price"></div>
+    <p id="detailCategory" class="muted"></p>
+    <p id="detailDescription" class="detail-description"></p>
+    <p id="detailStock" class="muted"></p>
+    <button type="button" class="buy-now-btn" id="detailBuyNow">Buy Now</button>
+  </div>
+</div>
+
 <!-- Professional order success / error popup -->
 <div class="feedback-modal" id="feedbackModal" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle" aria-describedby="feedbackLead">
   <div class="feedback-card">
@@ -444,7 +473,8 @@ const PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent(
       offer: p.offer || null,
       stock: Number(p.stock),
       minQty: 1,
-      image: p.image_url || "",
+      image: p.image_url || (Array.isArray(p.image_urls) ? p.image_urls[0] : '') || "",
+      images: Array.isArray(p.image_urls) && p.image_urls.length ? p.image_urls.slice(0,4) : (p.image_url ? [p.image_url] : []),
       description: p.description || ""
     }));
 
@@ -607,10 +637,10 @@ function render(){
 
 function productCard(p){
   const card = document.createElement("div"); card.className = "card";
-  const img = document.createElement("img"); img.loading = "lazy"; img.src = p.image || PLACEHOLDER; img.alt = p.name;
+  const img = document.createElement("img"); img.loading = "lazy"; img.src = p.image || PLACEHOLDER; img.alt = p.name; img.onclick = () => openProductDetails(p);
   img.onerror = () => { img.src = PLACEHOLDER; };
   const info = document.createElement("div"); info.className = "p-info";
-  const nm = document.createElement("div"); nm.className = "p-name"; nm.textContent = p.name;
+  const nm = document.createElement("div"); nm.className = "p-name"; nm.textContent = p.name; nm.style.cursor="pointer"; nm.onclick = () => openProductDetails(p);
   const ct = document.createElement("div"); ct.className = "p-cat"; ct.textContent = p.category || "";
   const pr = document.createElement("div"); pr.className = "p-price";
   if (p.offer && p.originalPrice > p.price) {
@@ -623,6 +653,8 @@ function productCard(p){
   const min = p.minQty || 1;
   if (min > 1){ const m = document.createElement("div"); m.className = "p-min"; m.textContent = "Min. order: " + min + " pcs"; info.appendChild(m); }
 
+  const actions = document.createElement("div"); actions.className = "product-actions";
+  const buy = document.createElement("button"); buy.className = "buy-now-btn"; buy.type = "button"; buy.textContent = "Buy Now"; buy.onclick = () => openProductDetails(p); actions.appendChild(buy);
   const q = cart[p.id] ? cart[p.id].qty : 0;
   if (q > 0){
     const st = document.createElement("div"); st.className = "stepper";
@@ -637,9 +669,35 @@ function productCard(p){
     ab.onclick = () => addToCart(p);
     info.appendChild(ab);
   }
+  info.insertBefore(actions, info.querySelector(".add-btn") || info.querySelector(".stepper") || null);
   card.append(img, info);
   return card;
 }
+
+/* ---------- Product details + Buy Now ---------- */
+let detailProduct = null;
+function openProductDetails(p) {
+  detailProduct = p;
+  const urls = (p.images && p.images.length ? p.images : [p.image]).filter(Boolean).slice(0,4);
+  $("detailMainImage").src = urls[0] || PLACEHOLDER;
+  $("detailMainImage").onerror = () => { $("detailMainImage").src = PLACEHOLDER; };
+  $("detailTitle").textContent = p.name;
+  $("detailPrice").textContent = rupee(p.price) + (p.originalPrice > p.price ? " (offer price)" : "");
+  $("detailCategory").textContent = p.category || "";
+  $("detailDescription").textContent = p.description || "Product details available nahi hain.";
+  $("detailStock").textContent = Number(p.stock) > 0 ? `Stock available: ${p.stock}` : "Stock details ke liye seller se contact karein.";
+  const thumbs = $("detailThumbs"); thumbs.replaceChildren();
+  urls.forEach(url => { const t=document.createElement("img"); t.className="detail-thumb"; t.src=url; t.alt=p.name; t.onclick=()=>{$("detailMainImage").src=url;}; thumbs.appendChild(t); });
+  $("productDetailModal").classList.add("show"); document.body.style.overflow="hidden";
+}
+function closeProductDetails(){ $("productDetailModal").classList.remove("show"); document.body.style.overflow=""; }
+$("detailClose").addEventListener("click", closeProductDetails);
+$("productDetailModal").addEventListener("click", e => { if(e.target === $("productDetailModal")) closeProductDetails(); });
+$("detailBuyNow").addEventListener("click", () => {
+  if (!detailProduct) return;
+  cart = {}; cart[detailProduct.id] = { qty: detailProduct.minQty || 1 }; saveCart(); render(); renderCart(); closeProductDetails(); openDrawer($("cartDrawer"));
+  $("checkoutMessage").textContent = "Buy Now: प्रोडक्ट और कीमत जाँचकर नीचे अपना नाम, मोबाइल और पता भरें।";
+});
 
 /* ---------- Cart ---------- */
 function findProduct(id){ return PRODUCTS.find(p => p.id === id); }

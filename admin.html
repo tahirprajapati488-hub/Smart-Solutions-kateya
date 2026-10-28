@@ -84,14 +84,11 @@ hr{border:0;border-top:1px solid #eee;margin:12px 0}
         <input name="stock" type="number" placeholder="Stock quantity"
           min="0" step="1" required>
 
-        <label for="imageFile"><b>Product Photo</b></label>
-        <input id="imageFile" name="image_file" type="file"
+        <label for="imageFile"><b>Product Photos (अधिकतम 4)</b></label>
+        <input id="imageFile" name="image_files" type="file" multiple
           accept="image/jpeg,image/png,image/webp">
-
-        <img id="imagePreview" alt="Product preview" hidden
-          style="max-width:150px;max-height:150px;object-fit:contain">
-
-        <p class="muted">JPG, PNG या WebP • अधिकतम 3 MB</p>
+        <div id="imagePreviews" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        <p class="muted">JPG, PNG या WebP • हर फोटो अधिकतम 3 MB • एडिट करते समय नई फोटो चुनने पर पुरानी गैलरी replace होगी; खाली छोड़ने पर पुरानी फोटो बनी रहेंगी।</p>
 
         <button id="saveBtn" type="submit">Add Product</button>
 
@@ -176,12 +173,12 @@ const productsList = $('productsList');
 const ordersList = $('ordersList');
 const saveBtn = $('saveBtn');
 const imageFile = $('imageFile');
-const imagePreview = $('imagePreview');
+const imagePreviews = $('imagePreviews');
 
 let editingId = null;
 let products = [];
-let currentImageUrl = '';
-let selectedImageFile = null;
+let currentImageUrls = [];
+let selectedImageFiles = [];
 let orders = [];
 
 const allowedStatuses = [
@@ -259,66 +256,35 @@ function orderRequest(method, body = null) {
   return adminRequest('/api/admin/orders', method, body);
 }
 
-/* IMAGE UPLOAD */
+/* IMAGE UPLOAD: up to four images */
 imageFile.addEventListener('change', () => {
-  selectedImageFile = imageFile.files?.[0] || null;
-
-  if (!selectedImageFile) return;
-
-  const allowedTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/webp'
-  ];
-
-  if (!allowedTypes.includes(selectedImageFile.type)) {
-    show('केवल JPG, PNG या WebP फोटो चुनें।');
-    imageFile.value = '';
-    selectedImageFile = null;
-    return;
+  selectedImageFiles = Array.from(imageFile.files || []);
+  imagePreviews.replaceChildren();
+  if (selectedImageFiles.length > 4) {
+    show('अधिकतम 4 फोटो चुन सकते हैं।'); imageFile.value = ''; selectedImageFiles = []; return;
   }
-
-  if (selectedImageFile.size > 3 * 1024 * 1024) {
-    show('फोटो का आकार 3 MB से कम होना चाहिए।');
-    imageFile.value = '';
-    selectedImageFile = null;
-    return;
+  const allowedTypes = ['image/jpeg','image/png','image/webp'];
+  for (const file of selectedImageFiles) {
+    if (!allowedTypes.includes(file.type)) {
+      show('केवल JPG, PNG या WebP फोटो चुनें।'); imageFile.value = ''; selectedImageFiles = []; imagePreviews.replaceChildren(); return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      show('हर फोटो का आकार 3 MB से कम होना चाहिए।'); imageFile.value = ''; selectedImageFiles = []; imagePreviews.replaceChildren(); return;
+    }
+    const img = document.createElement('img'); img.src = URL.createObjectURL(file); img.alt = 'Product preview';
+    img.style.cssText = 'width:85px;height:85px;object-fit:contain;border:1px solid #ddd;border-radius:6px';
+    imagePreviews.append(img);
   }
-
-  imagePreview.src = URL.createObjectURL(selectedImageFile);
-  imagePreview.hidden = false;
 });
 
 async function uploadProductImage(file) {
-  if (!file) return currentImageUrl;
-
   const token = await getToken();
-
   const dataUrl = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('फोटो पढ़ी नहीं जा सकी।'));
-    reader.readAsDataURL(file);
+    const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('फोटो पढ़ी नहीं जा सकी।')); reader.readAsDataURL(file);
   });
-
-  const response = await fetch('/api/admin/upload-image', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      image: dataUrl,
-      contentType: file.type
-    })
-  });
-
+  const response = await fetch('/api/admin/upload-image', { method:'POST', headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'}, body:JSON.stringify({image:dataUrl,contentType:file.type}) });
   const result = await response.json().catch(() => ({}));
-
-  if (!response.ok || !result.image_url) {
-    throw new Error(result.error || 'फोटो अपलोड नहीं हुई।');
-  }
-
+  if (!response.ok || !result.image_url) throw new Error(result.error || 'फोटो अपलोड नहीं हुई।');
   return result.image_url;
 }
 
@@ -400,14 +366,8 @@ async function loadProducts() {
 
       card.append(title, status, price, category, stock);
 
-      if (product.image_url) {
-        const image = document.createElement('img');
-        image.src = product.image_url;
-        image.alt = product.name;
-        image.loading = 'lazy';
-        image.onerror = () => image.remove();
-        card.append(image);
-      }
+      const imageUrls = Array.isArray(product.image_urls) && product.image_urls.length ? product.image_urls : (product.image_url ? [product.image_url] : []);
+      imageUrls.forEach(url => { const image = document.createElement('img'); image.src = url; image.alt = product.name; image.loading = 'lazy'; image.onerror = () => image.remove(); card.append(image); });
 
       if (product.description) {
         const description = document.createElement('p');
@@ -457,11 +417,9 @@ function startEdit(product) {
   productForm.elements.category.value = product.category || '';
   productForm.elements.stock.value = product.stock;
 
-  currentImageUrl = product.image_url || '';
-  selectedImageFile = null;
-  imageFile.value = '';
-  imagePreview.src = currentImageUrl;
-  imagePreview.hidden = !currentImageUrl;
+  currentImageUrls = Array.isArray(product.image_urls) && product.image_urls.length ? product.image_urls.slice(0,4) : (product.image_url ? [product.image_url] : []);
+  selectedImageFiles = []; imageFile.value = ''; imagePreviews.replaceChildren();
+  currentImageUrls.forEach(url => { const img=document.createElement('img'); img.src=url; img.alt='Current product photo'; img.style.cssText='width:85px;height:85px;object-fit:contain;border:1px solid #ddd;border-radius:6px'; imagePreviews.append(img); });
 
   $('formTitle').textContent = 'प्रोडक्ट एडिट करें';
   saveBtn.textContent = 'Save Changes';
@@ -474,10 +432,7 @@ function startEdit(product) {
 function cancelEdit() {
   editingId = null;
   productForm.reset();
-  currentImageUrl = '';
-  selectedImageFile = null;
-  imagePreview.removeAttribute('src');
-  imagePreview.hidden = true;
+  currentImageUrls = []; selectedImageFiles = []; imageFile.value = ''; imagePreviews.replaceChildren();
 
   $('formTitle').textContent = 'नया प्रोडक्ट जोड़ें';
   saveBtn.textContent = 'Add Product';
@@ -513,7 +468,7 @@ productForm.addEventListener('submit', async event => {
       throw new Error('नाम, category, कीमत और stock सही भरें।');
     }
 
-    body.image_url = await uploadProductImage(selectedImageFile);
+    if (selectedImageFiles.length) { body.image_urls = await Promise.all(selectedImageFiles.map(uploadProductImage)); body.image_url = body.image_urls[0] || ''; } else if (editingId !== null) { body.image_urls = currentImageUrls; body.image_url = currentImageUrls[0] || ''; } else { body.image_urls = []; body.image_url = ''; }
 
     if (editingId !== null) {
       body.id = editingId;
@@ -781,10 +736,7 @@ async function logout() {
 
   productForm.reset();
   editingId = null;
-  selectedImageFile = null;
-  currentImageUrl = '';
-  imagePreview.removeAttribute('src');
-  imagePreview.hidden = true;
+  selectedImageFiles = []; currentImageUrls = []; imageFile.value = ''; imagePreviews.replaceChildren();
 
   $('formTitle').textContent = 'नया प्रोडक्ट जोड़ें';
   saveBtn.textContent = 'Add Product';
