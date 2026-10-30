@@ -206,6 +206,16 @@
   #checkoutMessage{font-size:13px;line-height:1.5;margin-top:8px;color:#b42318}
   @media(max-width:380px){.feedback-card{padding:22px 17px}.feedback-card h2{font-size:22px}}
 
+
+  /* Promotional posters use the existing site palette and spacing. */
+  .offer-banners{display:grid;grid-template-columns:1fr;gap:14px;margin:18px 0 24px}
+  .offer-banner{position:relative;overflow:hidden;border-radius:14px;background:#f8f8f8;border:1px solid #eee;color:inherit;text-decoration:none;display:block}
+  .offer-banner img{display:block;width:100%;max-height:340px;object-fit:contain;margin:0 auto;background:#f8f8f8}
+  .offer-banner-copy{padding:12px 15px}
+  .offer-banner-title{font-weight:800;font-size:18px;margin:0 0 5px}
+  .offer-banner-subtitle{font-size:14px;line-height:1.45;margin:0 0 9px}
+  .offer-banner-cta{display:inline-block;background:#a3262a;color:#fff;border-radius:8px;padding:8px 13px;font-weight:700;font-size:13px}
+  @media(min-width:720px){.offer-banners{grid-template-columns:1fr 1fr}.offer-banner img{max-height:280px}}
 </style>
 </head>
 <body>
@@ -375,6 +385,8 @@
   Shop your favourite products at retail prices.<br>
   Place your order online. Our team will contact you to confirm your order and token amount. Delivery charges, if any, will be confirmed by the seller.
 </p>
+
+<section id="offerBannersSection" class="offer-banners" aria-label="Current offers" hidden></section>
 
 <h2>Our Products</h2>
 
@@ -981,10 +993,41 @@ $("trackOrderForm").addEventListener("submit", async event => {
   }
 });
 
+/* ---------- Homepage offer posters ---------- */
+async function loadOfferBanners() {
+  const section = $('offerBannersSection');
+  try {
+    const response = await fetch('/api/banners', { cache: 'no-store' });
+    if (!response.ok) return;
+    const data = await response.json();
+    const banners = Array.isArray(data.banners) ? data.banners : [];
+    section.replaceChildren();
+    banners.forEach(banner => {
+      if (!banner.image_url) return;
+      const href = typeof banner.link_url === 'string' && /^https:\/\//i.test(banner.link_url) ? banner.link_url : '';
+      const card = document.createElement(href ? 'a' : 'div');
+      card.className = 'offer-banner';
+      if (href) { card.href = href; card.target = '_blank'; card.rel = 'noopener'; }
+      const img = document.createElement('img'); img.src = banner.image_url; img.alt = banner.title || 'Special offer'; img.loading = 'lazy';
+      img.onerror = () => card.remove(); card.append(img);
+      if (banner.title || banner.subtitle || banner.button_text) {
+        const copy = document.createElement('div'); copy.className = 'offer-banner-copy';
+        if (banner.title) { const title = document.createElement('div'); title.className = 'offer-banner-title'; title.textContent = banner.title; copy.append(title); }
+        if (banner.subtitle) { const subtitle = document.createElement('p'); subtitle.className = 'offer-banner-subtitle'; subtitle.textContent = banner.subtitle; copy.append(subtitle); }
+        if (banner.button_text && href) { const cta = document.createElement('span'); cta.className = 'offer-banner-cta'; cta.textContent = banner.button_text; copy.append(cta); }
+        card.append(copy);
+      }
+      section.append(card);
+    });
+    section.hidden = section.children.length === 0;
+  } catch (e) { console.warn('Offer posters could not be loaded:', e); }
+}
+
 /* ---------- Start ---------- */
 render();
 renderCart();
 loadProducts();
+loadOfferBanners();
 </script>
 </body>
 </html>

@@ -124,6 +124,31 @@ hr{border:0;border-top:1px solid #eee;margin:12px 0}
       <div id="offersList">Offers लोड हो रहे हैं...</div>
     </div>
 
+    <!-- OFFER POSTERS / HOMEPAGE BANNERS -->
+    <div class="card">
+      <h3>Offer Posters / Website Banners</h3>
+      <p class="muted">यहाँ से होमपेज पर दिखने वाला promotional poster जोड़ें। वेबसाइट का मौजूदा design और brand name नहीं बदलेगा।</p>
+      <form id="bannerForm">
+        <input type="hidden" name="id">
+        <input name="title" placeholder="Poster title (e.g. Diwali Mega Sale)" maxlength="120" required>
+        <textarea name="subtitle" placeholder="Short offer text (optional)" maxlength="300"></textarea>
+        <label for="bannerImageFile"><b>Poster image (JPG, PNG या WebP)</b></label>
+        <input id="bannerImageFile" type="file" accept="image/jpeg,image/png,image/webp">
+        <div id="bannerImagePreview" style="margin:8px 0"></div>
+        <p class="muted">Poster image अधिकतम 3 MB। नया poster बनाते समय image जरूरी है; edit करते समय image खाली छोड़ें तो पुरानी image रहेगी।</p>
+        <input name="button_text" placeholder="Button text (optional, e.g. Shop Now)" maxlength="40">
+        <input name="link_url" type="url" placeholder="Button/link URL (optional, https://...)" maxlength="2048">
+        <label>Start date & time</label><input name="start_date" type="datetime-local" required>
+        <label>End date & time</label><input name="end_date" type="datetime-local" required>
+        <label><input name="is_active" type="checkbox" checked style="width:auto"> Poster enabled</label>
+        <label>Display order (smaller number appears first)</label><input name="sort_order" type="number" min="0" max="9999" step="1" value="0">
+        <button type="submit" id="saveBannerBtn">Save Poster</button>
+        <button type="button" class="secondary" id="cancelBannerEdit" hidden>Cancel Edit</button>
+      </form>
+      <button type="button" class="secondary" id="refreshBannersBtn">Refresh Posters</button>
+      <div id="bannersList">Posters लोड हो रहे हैं...</div>
+    </div>
+
     <!-- ORDER MANAGEMENT -->
     <div class="card">
       <h3>Customer Orders</h3>
@@ -180,6 +205,9 @@ let products = [];
 let currentImageUrls = [];
 let selectedImageFiles = [];
 let orders = [];
+let banners = [];
+let currentBannerImageUrl = '';
+let selectedBannerFile = null;
 
 const allowedStatuses = [
   'Pending',
@@ -315,7 +343,7 @@ $('loginForm').addEventListener('submit', async event => {
       loadProducts(),
       loadOrders()
     ]);
-    await loadOffers();
+    await Promise.all([loadOffers(), loadBanners()]);
 
     show('Admin Panel तैयार है।');
   } catch (error) {
@@ -711,6 +739,62 @@ offerForm.addEventListener('submit',async e=>{e.preventDefault();try{const f=off
 $('cancelOfferEdit').onclick=()=>{offerForm.reset();offerForm.elements.id.value='';offerForm.elements.is_active.checked=true;$('saveOfferBtn').textContent='Save Offer';$('cancelOfferEdit').hidden=true;};
 $('refreshOffersBtn').onclick=loadOffers;
 
+/* OFFER POSTERS / BANNERS */
+const bannerForm = $('bannerForm');
+const bannersList = $('bannersList');
+const bannerImageFile = $('bannerImageFile');
+const bannerImagePreview = $('bannerImagePreview');
+function bannerRequest(method, body = null) { return adminRequest('/api/admin/banners', method, body); }
+function previewBanner(url) {
+  bannerImagePreview.replaceChildren();
+  if (!url) return;
+  const img = document.createElement('img'); img.src = url; img.alt = 'Offer poster preview';
+  img.style.cssText = 'display:block;max-width:100%;max-height:220px;object-fit:contain;border:1px solid #ddd;border-radius:8px';
+  bannerImagePreview.append(img);
+}
+bannerImageFile.addEventListener('change', () => {
+  selectedBannerFile = bannerImageFile.files && bannerImageFile.files[0] || null;
+  if (!selectedBannerFile) { previewBanner(currentBannerImageUrl); return; }
+  if (!['image/jpeg','image/png','image/webp'].includes(selectedBannerFile.type)) { show('केवल JPG, PNG या WebP poster चुनें।'); bannerImageFile.value=''; selectedBannerFile=null; return; }
+  if (selectedBannerFile.size > 3 * 1024 * 1024) { show('Poster image 3 MB से कम होनी चाहिए।'); bannerImageFile.value=''; selectedBannerFile=null; return; }
+  previewBanner(URL.createObjectURL(selectedBannerFile));
+});
+async function loadBanners() {
+  bannersList.textContent = 'Posters लोड हो रहे हैं...';
+  try {
+    const data = await bannerRequest('GET'); banners = data.banners || []; bannersList.replaceChildren();
+    if (!banners.length) { bannersList.textContent = 'अभी कोई poster नहीं है।'; return; }
+    banners.forEach(banner => {
+      const card = document.createElement('div'); card.className='product';
+      const image = document.createElement('img'); image.src=banner.image_url; image.alt=banner.title; image.style.cssText='display:block;width:100%;max-width:360px;max-height:180px;object-fit:contain'; card.append(image);
+      const title=document.createElement('h4'); title.textContent=banner.title; card.append(title);
+      if (banner.subtitle) { const sub=document.createElement('p'); sub.textContent=banner.subtitle; card.append(sub); }
+      const dates=document.createElement('p'); dates.textContent=`${new Date(banner.start_date).toLocaleString()} – ${new Date(banner.end_date).toLocaleString()} • ${banner.is_active?'Enabled':'Disabled'} • Order ${banner.sort_order||0}`; card.append(dates);
+      const actions=document.createElement('div'); actions.className='actions';
+      const edit=document.createElement('button'); edit.textContent='Edit'; edit.onclick=()=>{bannerForm.elements.id.value=banner.id;bannerForm.elements.title.value=banner.title;bannerForm.elements.subtitle.value=banner.subtitle||'';bannerForm.elements.button_text.value=banner.button_text||'';bannerForm.elements.link_url.value=banner.link_url||'';bannerForm.elements.start_date.value=new Date(banner.start_date).toISOString().slice(0,16);bannerForm.elements.end_date.value=new Date(banner.end_date).toISOString().slice(0,16);bannerForm.elements.is_active.checked=!!banner.is_active;bannerForm.elements.sort_order.value=banner.sort_order||0;currentBannerImageUrl=banner.image_url;selectedBannerFile=null;bannerImageFile.value='';previewBanner(currentBannerImageUrl);$('saveBannerBtn').textContent='Update Poster';$('cancelBannerEdit').hidden=false;bannerForm.scrollIntoView({behavior:'smooth'});};
+      const toggle=document.createElement('button');toggle.className='secondary';toggle.textContent=banner.is_active?'Disable':'Enable';toggle.onclick=async()=>{try{await bannerRequest('PATCH',{id:banner.id,is_active:!banner.is_active});await loadBanners();show('Poster status updated.');}catch(e){show(e.message);}};
+      const del=document.createElement('button');del.className='danger';del.textContent='Delete';del.onclick=async()=>{if(!confirm('यह poster हटाएँ?'))return;try{await bannerRequest('DELETE',{id:banner.id});await loadBanners();show('Poster deleted.');}catch(e){show(e.message);}};
+      actions.append(edit,toggle,del);card.append(actions);bannersList.append(card);
+    });
+  } catch(e) { bannersList.textContent='Posters load नहीं हुए: '+e.message+' (Supabase banner migration चलाना जरूरी है।)'; }
+}
+bannerForm.addEventListener('submit', async e => {
+  e.preventDefault(); const button=$('saveBannerBtn'); setBusy(button,true,'Saving...');
+  try {
+    const f=bannerForm.elements;
+    let imageUrl=currentBannerImageUrl;
+    if (selectedBannerFile) imageUrl=await uploadProductImage(selectedBannerFile);
+    if (!imageUrl) throw new Error('Poster image चुनें।');
+    const body={title:f.title.value.trim(),subtitle:f.subtitle.value.trim(),image_url:imageUrl,button_text:f.button_text.value.trim(),link_url:f.link_url.value.trim(),start_date:new Date(f.start_date.value).toISOString(),end_date:new Date(f.end_date.value).toISOString(),is_active:f.is_active.checked,sort_order:Number(f.sort_order.value||0)};
+    if(f.id.value){body.id=f.id.value;await bannerRequest('PATCH',body);}else{await bannerRequest('POST',body);}
+    resetBannerForm(); await loadBanners(); show('Poster saved.');
+  } catch(e) { show('Poster save error: '+e.message); }
+  finally { setBusy(button,false); }
+});
+function resetBannerForm(){bannerForm.reset();bannerForm.elements.id.value='';bannerForm.elements.is_active.checked=true;bannerForm.elements.sort_order.value='0';currentBannerImageUrl='';selectedBannerFile=null;bannerImageFile.value='';previewBanner('');$('saveBannerBtn').textContent='Save Poster';$('cancelBannerEdit').hidden=true;}
+$('cancelBannerEdit').onclick=resetBannerForm;
+$('refreshBannersBtn').onclick=loadBanners;
+
 /* REFRESH BUTTONS */
 $('refreshBtn').addEventListener('click', loadProducts);
 $('refreshOrdersBtn').addEventListener('click', async () => {
@@ -737,6 +821,7 @@ async function logout() {
   productForm.reset();
   editingId = null;
   selectedImageFiles = []; currentImageUrls = []; imageFile.value = ''; imagePreviews.replaceChildren();
+  resetBannerForm();
 
   $('formTitle').textContent = 'नया प्रोडक्ट जोड़ें';
   saveBtn.textContent = 'Add Product';
