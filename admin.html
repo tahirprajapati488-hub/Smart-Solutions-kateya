@@ -7,43 +7,27 @@
 <title>Smart Solutions | Admin Panel</title>
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f3f5f9;color:#222}
-header{background:#14213d;color:white;padding:18px}
-header h2{margin:0;font-size:22px}
-main{max-width:850px;margin:20px auto;padding:15px}
-.card{background:white;padding:18px;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 12px #0000000d}
-h3{margin-top:0}
-input,textarea,select,button{width:100%;padding:12px;margin:7px 0;border-radius:7px;font-size:15px}
-input,textarea,select{border:1px solid #ddd;background:white;color:#222}
-textarea{min-height:80px;resize:vertical}
-button{border:0;background:#1769ff;color:white;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.6;cursor:wait}
-.danger{background:#c62828}
-.secondary{background:#475569}
-.success{background:#16803c}
-.warning{background:#b77900}
-.product,.order{border:1px solid #e5e7eb;padding:14px;border-radius:9px;margin:12px 0;overflow-wrap:anywhere}
-.product h4,.order h4{margin:0 0 8px;font-size:17px}
-.product p,.order p{margin:6px 0;font-size:14px;line-height:1.5}
-.product img{display:block;max-width:120px;max-height:120px;object-fit:contain;margin:8px 0}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
-.actions button{margin:0}
-.muted{color:#666;font-size:13px}
-.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:bold;background:#e0e7ff;color:#3730a3}
-.active{background:#dcfce7;color:#166534}
-.inactive{background:#fee2e2;color:#991b1b}
-#panel{display:none}
-#message{white-space:pre-wrap;font-size:14px;line-height:1.5}
-.order-items{background:#f8fafc;padding:10px;border-radius:7px;margin:8px 0}
-hr{border:0;border-top:1px solid #eee;margin:12px 0}
-@media(max-width:420px){main{padding:10px}.card{padding:14px}}
+:root{--navy:#14213d;--blue:#1769ff;--bg:#f3f6fb;--ink:#172033;--muted:#687386;--line:#e5eaf2;--green:#16803c;--red:#c62828;--shadow:0 12px 32px rgba(20,33,61,.07)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:118px}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,#14213d,#203d70);color:#fff;padding:22px max(18px,calc((100vw - 1240px)/2));box-shadow:0 5px 20px #14213d22;position:sticky;top:0;z-index:50}header h2{margin:0;font-size:22px;letter-spacing:-.3px}header p{margin:5px 0 0;color:#dbe7ff;font-size:13px}
+main{max-width:1240px;margin:24px auto;padding:0 18px}.card{background:#fff;padding:24px;border:1px solid var(--line);border-radius:18px;margin-bottom:20px;box-shadow:var(--shadow);scroll-margin-top:115px}h3{margin:0 0 8px;font-size:21px;letter-spacing:-.35px}h4{color:var(--ink)}p{line-height:1.55}.muted{color:var(--muted);font-size:13px}
+input,textarea,select,button{width:100%;padding:12px 14px;margin:7px 0;border-radius:10px;font:inherit;font-size:14px}input,textarea,select{border:1px solid #d8dfeb;background:#fff;color:var(--ink);outline:none}input:focus,textarea:focus,select:focus{border-color:#6b9dff;box-shadow:0 0 0 3px #1769ff16}textarea{min-height:88px;resize:vertical}button{border:0;background:var(--blue);color:#fff;font-weight:750;cursor:pointer;transition:transform .15s,filter .15s}button:hover{filter:brightness(.96);transform:translateY(-1px)}button:disabled{opacity:.6;cursor:wait}.danger{background:var(--red)}.secondary{background:#e9eef7;color:#25334d}.success{background:var(--green)}.warning{background:#b77900}
+#loginBox{max-width:470px;margin:7vh auto;padding:30px}#loginBox h3{font-size:25px}#loginBox:before{content:"SS";display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:var(--navy);color:#fff;font-weight:900;margin-bottom:16px;letter-spacing:-1px}
+#panel{display:none}.admin-welcome{display:flex;justify-content:space-between;align-items:center;gap:20px;background:linear-gradient(120deg,#fff,#edf4ff);border:1px solid #dfe9fb;padding:24px;border-radius:18px;margin-bottom:16px}.admin-welcome h2{margin:0 0 7px;font-size:25px}.admin-welcome p{margin:0;color:var(--muted)}.welcome-badge{white-space:nowrap;background:#dce8ff;color:#1646a3;padding:10px 13px;border-radius:12px;font-size:12px;font-weight:800}
+.admin-nav{display:flex;gap:8px;overflow:auto;padding:10px;background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:20px;position:sticky;top:86px;z-index:40;box-shadow:0 6px 18px #14213d0a}.admin-nav a{white-space:nowrap;text-decoration:none;color:#4c5870;padding:10px 13px;border-radius:9px;font-size:13px;font-weight:750}.admin-nav a:hover,.admin-nav a.active{background:var(--navy);color:#fff}
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}.stat-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px;box-shadow:var(--shadow)}.stat-card span{display:block;color:var(--muted);font-size:12px;font-weight:700}.stat-card strong{display:block;font-size:28px;margin-top:7px;letter-spacing:-1px}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:15px}.section-head p{margin:5px 0 0}.section-icon{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:12px;background:#eaf1ff;color:#194db5;font-size:21px}.section-title{display:flex;align-items:flex-start;gap:12px}.section-title h3{margin-top:1px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px}.form-grid .full{grid-column:1/-1}.form-actions{display:flex;gap:10px;flex-wrap:wrap}.form-actions button{width:auto;min-width:145px}.form-label{display:block;margin:10px 0 2px;font-size:13px;font-weight:750;color:#36445c}
+.product,.order{border:1px solid var(--line);background:#fff;padding:17px;border-radius:14px;margin:12px 0;overflow-wrap:anywhere}.product h4,.order h4{margin:0 0 8px;font-size:16px}.product p,.order p{margin:6px 0;font-size:14px;line-height:1.5}.product img{display:inline-block;max-width:120px;max-height:120px;object-fit:contain;margin:8px 8px 8px 0;border-radius:9px;background:#f8fafc;border:1px solid var(--line);padding:5px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.actions button{width:auto;min-width:100px;margin:0}.muted{color:var(--muted);font-size:13px}.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:bold;background:#e0e7ff;color:#3730a3}.active{background:#dcfce7;color:#166534}.inactive{background:#fee2e2;color:#991b1b}#message{white-space:pre-wrap;font-size:14px;line-height:1.5;padding:0 3px}.order-items{background:#f8fafc;padding:10px;border-radius:7px;margin:8px 0}hr{border:0;border-top:1px solid var(--line);margin:16px 0}.empty-state{padding:20px;border:1px dashed #ccd5e4;border-radius:12px;color:var(--muted);background:#fafcff}
+#logoutBtn{max-width:180px}.logout-card{display:flex;justify-content:space-between;align-items:center;gap:16px}.logout-card p{margin:0;color:var(--muted);font-size:13px}
+@media(max-width:760px){main{margin:16px auto;padding:0 12px}.card{padding:17px;border-radius:14px}.admin-welcome{align-items:flex-start;flex-direction:column;padding:19px}.admin-nav{top:78px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat-card strong{font-size:24px}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}.section-head{flex-direction:column}.form-actions button{width:100%}header{padding:16px 14px}.admin-welcome h2{font-size:22px}}
+@media(max-width:420px){.stats-grid{gap:8px}.stat-card{padding:13px}.stat-card strong{font-size:22px}.admin-nav a{padding:9px 11px}}
 </style>
 </head>
 
 <body>
 <header>
-  <h2>Smart Solutions — Admin</h2>
+  <h2>Smart Solutions Kateya <span style="font-weight:500;color:#c8d8fa">/ Admin Studio</span></h2>
+  <p>Store management • Products, orders, offers and homepage posters</p>
 </header>
 
 <main>
@@ -63,10 +47,20 @@ hr{border:0;border-top:1px solid #eee;margin:12px 0}
   </section>
 
   <section id="panel">
+    <div class="admin-welcome"><div><h2>Store Control Center</h2><p>अपनी दुकान के products, discounts, posters और customer orders एक ही जगह से manage करें।</p></div><span class="welcome-badge">● ADMIN WORKSPACE</span></div>
+    <nav class="admin-nav" aria-label="Admin sections">
+      <a href="#dashboardStats" class="active">Overview</a><a href="#productFormCard">＋ Add Product</a><a href="#productsCard">Products</a><a href="#offersCard">Offers</a><a href="#bannersCard">Posters</a><a href="#ordersCard">Orders</a>
+    </nav>
+    <div class="stats-grid" id="dashboardStats">
+      <div class="stat-card"><span>Products loaded</span><strong id="statProducts">—</strong></div>
+      <div class="stat-card"><span>Active offers</span><strong id="statOffers">—</strong></div>
+      <div class="stat-card"><span>Homepage posters</span><strong id="statBanners">—</strong></div>
+      <div class="stat-card"><span>Orders loaded</span><strong id="statOrders">—</strong></div>
+    </div>
 
     <!-- PRODUCT FORM -->
-    <div class="card">
-      <h3 id="formTitle">नया प्रोडक्ट जोड़ें</h3>
+    <div class="card" id="productFormCard">
+      <div class="section-head"><div class="section-title"><span class="section-icon">＋</span><div><h3 id="formTitle">नया प्रोडक्ट जोड़ें</h3><p class="muted">नाम, कीमत, stock, category और अधिकतम 4 photos अपडेट करें।</p></div></div></div>
 
       <form id="productForm">
         <input name="name" placeholder="Product name"
@@ -98,16 +92,16 @@ hr{border:0;border-top:1px solid #eee;margin:12px 0}
     </div>
 
     <!-- PRODUCT MANAGEMENT -->
-    <div class="card">
-      <h3>Products Management</h3>
-      <button id="refreshBtn" type="button">Refresh Products</button>
+    <div class="card" id="productsCard">
+      <div class="section-head"><div class="section-title"><span class="section-icon">▦</span><div><h3>Products Management</h3><p class="muted">Products edit, activate/deactivate या delete करें।</p></div></div>
+      <button id="refreshBtn" type="button" style="width:auto;min-width:150px">↻ Refresh</button></div>
       <div id="productsList">Products लोड हो रहे हैं...</div>
     </div>
 
     <!-- OFFERS & FESTIVALS -->
-    <div class="card">
-      <h3>Offers & Festivals</h3>
-      <p class="muted">किसी प्रोडक्ट पर त्योहार/कस्टम ऑफर लगाएँ। पहले Supabase migration लागू करना जरूरी है।</p>
+    <div class="card" id="offersCard">
+      <div class="section-head"><div class="section-title"><span class="section-icon">％</span><div><h3>Offers & Festivals</h3>
+      <p class="muted">किसी product पर percentage या fixed discount लगाएँ। ऑफर की तारीखें और status सेट करें।</p></div></div></div>
       <form id="offerForm">
         <input type="hidden" name="id">
         <label>Product</label><select name="product_id" id="offerProduct" required></select>
@@ -125,9 +119,9 @@ hr{border:0;border-top:1px solid #eee;margin:12px 0}
     </div>
 
     <!-- OFFER POSTERS / HOMEPAGE BANNERS -->
-    <div class="card">
-      <h3>Offer Posters / Website Banners</h3>
-      <p class="muted">यहाँ से होमपेज पर दिखने वाला promotional poster जोड़ें। वेबसाइट का मौजूदा design और brand name नहीं बदलेगा।</p>
+    <div class="card" id="bannersCard">
+      <div class="section-head"><div class="section-title"><span class="section-icon">▧</span><div><h3>Offer Posters / Website Banners</h3>
+      <p class="muted">होमपेज के promotional posters, button/link, active dates और display order manage करें।</p></div></div></div>
       <form id="bannerForm">
         <input type="hidden" name="id">
         <input name="title" placeholder="Poster title (e.g. Diwali Mega Sale)" maxlength="120" required>
@@ -150,21 +144,14 @@ hr{border:0;border-top:1px solid #eee;margin:12px 0}
     </div>
 
     <!-- ORDER MANAGEMENT -->
-    <div class="card">
-      <h3>Customer Orders</h3>
-      <p class="muted">
-        यहाँ वेबसाइट से आए ऑर्डर दिखाई देंगे। ग्राहक से संपर्क करके
-        टोकन और ऑर्डर की पुष्टि करें।
-      </p>
-
-      <button id="refreshOrdersBtn" type="button">
-        Refresh Orders
-      </button>
-
+    <div class="card" id="ordersCard">
+      <div class="section-head"><div class="section-title"><span class="section-icon">▤</span><div><h3>Customer Orders</h3>
+      <p class="muted">वेबसाइट से आए orders यहाँ देखें और status update करें।</p></div></div><button id="refreshOrdersBtn" type="button" style="width:auto;min-width:150px">↻ Refresh Orders</button></div>
       <div id="ordersList">Orders लोड हो रहे हैं...</div>
     </div>
 
-    <div class="card">
+    <div class="card logout-card">
+      <div><h3>Session & Security</h3><p>काम पूरा होने पर Admin Panel से logout करें।</p></div>
       <button class="danger" id="logoutBtn" type="button">Logout</button>
     </div>
 
@@ -177,16 +164,23 @@ hr{border:0;border-top:1px solid #eee;margin:12px 0}
 import { createClient } from
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-const SUPABASE_URL =
-  'https://svkrdigrxclqwytilomd.supabase.co';
-
-const SUPABASE_ANON_KEY =
-  'sb_publishable_R5A69_1VytJ7lP80Yg_9-g_oucHf4Lz';
-
-const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+// Keep browser authentication aligned with the Supabase project used by server APIs.
+// SUPABASE_ANON_KEY is the public anon/publishable key, never the service-role secret.
+let supabase;
+try {
+  const configResponse = await fetch('/api/config', { cache: 'no-store' });
+  const publicConfig = await configResponse.json().catch(() => ({}));
+  if (!configResponse.ok || !publicConfig.supabaseUrl || !publicConfig.supabaseAnonKey) {
+    throw new Error(publicConfig.error || 'Supabase public config missing. Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel.');
+  }
+  supabase = createClient(publicConfig.supabaseUrl, publicConfig.supabaseAnonKey);
+} catch (configError) {
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) loginForm.style.display = 'none';
+  const loginBox = document.getElementById('loginBox');
+  if (loginBox) { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Configuration error: ' + configError.message; loginBox.append(p); }
+  throw configError;
+}
 
 const $ = id => document.getElementById(id);
 
@@ -344,7 +338,7 @@ $('loginForm').addEventListener('submit', async event => {
       loadOrders()
     ]);
     await Promise.all([loadOffers(), loadBanners()]);
-
+    updateDashboardStats();
     show('Admin Panel तैयार है।');
   } catch (error) {
     await supabase.auth.signOut();
@@ -707,6 +701,24 @@ async function loadOrders() {
     throw error;
   }
 }
+
+function updateDashboardStats() {
+  const put = (id, value) => { const el = $(id); if (el) el.textContent = String(value); };
+  put('statProducts', products.length);
+  put('statOffers', document.querySelectorAll('#offersList .product').length);
+  put('statBanners', banners.length);
+  put('statOrders', orders.length);
+}
+
+// Keep overview counters in sync when lists refresh.
+const dashboardObserver = new MutationObserver(updateDashboardStats);
+['productsList','offersList','bannersList','ordersList'].forEach(id => { const el=$(id); if(el) dashboardObserver.observe(el,{childList:true,subtree:false}); });
+
+// Highlight the selected section in the quick navigation.
+document.querySelectorAll('.admin-nav a').forEach(link => link.addEventListener('click', () => {
+  document.querySelectorAll('.admin-nav a').forEach(item => item.classList.remove('active'));
+  link.classList.add('active');
+}));
 
 /* OFFERS & FESTIVALS */
 const offerForm = $('offerForm');
