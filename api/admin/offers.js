@@ -26,5 +26,5 @@ export default async function handler(req, res) {
     let result;
     if(req.method==='PATCH'&&b.id){result=await db.from('product_offers').update(payload).eq('id',b.id).select('*').single();}else{result=await db.from('product_offers').insert(payload).select('*').single();}
     if(result.error) throw result.error; return res.status(req.method==='POST'?201:200).json({offer:result.data});
-  } catch(e) { console.error('Offers API:',e.message); return res.status(500).json({error:'Offers operation failed. Confirm the product_offers migration has been applied.'}); }
+  } catch(e) { console.error('Offers API:',e.message); return res.status(500).json({error:'Offers operation failed: ' + (e?.message || 'database request failed')}); }
 }

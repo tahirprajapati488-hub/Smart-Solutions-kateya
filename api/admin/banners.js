@@ -58,6 +58,6 @@ export default async function handler(req, res) {
     return res.status(req.method === 'POST' ? 201 : 200).json({ banner: result.data });
   } catch (error) {
     console.error('Admin banners API error:', error.message);
-    return res.status(500).json({ error: 'Poster operation failed. Confirm the site_banners SQL migration has been applied.' });
+    return res.status(500).json({ error: 'Poster operation failed: ' + (error?.message || 'database request failed') });
   }
 }
